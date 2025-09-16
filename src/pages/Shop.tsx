@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Search, Filter, Heart, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,79 +11,133 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { productsAPI, cartAPI, wishlistAPI } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSocket } from "@/contexts/SocketContext";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock product data
-const products = [
-  {
-    id: 1,
-    name: "Elegant Leather Handbag",
-    price: 299,
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    category: "Bags & Accessories",
-  },
-  {
-    id: 2,
-    name: "Premium Watch Collection",
-    price: 599,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    category: "Accessories",
-  },
-  {
-    id: 3,
-    name: "Luxury Skincare Set",
-    price: 149,
-    image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    category: "Beauty Products",
-  },
-  {
-    id: 4,
-    name: "Modern Table Lamp",
-    price: 199,
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    category: "Homeware",
-  },
-  {
-    id: 5,
-    name: "Designer Scarf",
-    price: 89,
-    image: "https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    category: "Clothing",
-  },
-  {
-    id: 6,
-    name: "Artisan Ceramic Vase",
-    price: 129,
-    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    category: "Homeware",
-  },
-  {
-    id: 7,
-    name: "Premium Silk Dress",
-    price: 249,
-    image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    category: "Clothing",
-  },
-  {
-    id: 8,
-    name: "Organic Face Cream",
-    price: 79,
-    image: "https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    category: "Beauty Products",
-  },
-];
-
-const categories = ["All Categories", "Clothing", "Bags & Accessories", "Homeware", "Beauty Products"];
+const categories = ["All Categories", "Clothing", "Bags & Accessories", "Homeware", "Art & Decor", "Beauty Products", "Jewelry"];
 
 const Shop = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [sortBy, setSortBy] = useState("featured");
+  const { user } = useAuth();
+  const { socket } = useSocket();
+  const { toast } = useToast();
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All Categories" || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    fetchProducts();
+  }, [selectedCategory, searchTerm, sortBy]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('productAdded', (product) => {
+        setProducts(prev => [product, ...prev]);
+      });
+
+      socket.on('productUpdated', (product) => {
+        setProducts(prev => 
+          prev.map(p => p._id === product._id ? product : p)
+        );
+      });
+
+      socket.on('productDeleted', (productId) => {
+        setProducts(prev => prev.filter(p => p._id !== productId));
+      });
+
+      return () => {
+        socket.off('productAdded');
+        socket.off('productUpdated');
+        socket.off('productDeleted');
+      };
+    }
+  }, [socket]);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        category: selectedCategory !== "All Categories" ? selectedCategory : undefined,
+        search: searchTerm || undefined,
+      };
+      
+      const response = await productsAPI.getAll(params);
+      let fetchedProducts = response.data.products;
+
+      // Sort products
+      if (sortBy === 'price-low') {
+        fetchedProducts.sort((a, b) => a.price - b.price);
+      } else if (sortBy === 'price-high') {
+        fetchedProducts.sort((a, b) => b.price - a.price);
+      } else if (sortBy === 'name') {
+        fetchedProducts.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      setProducts(fetchedProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch products",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCart = async (productId: string) => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to add items to cart",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await cartAPI.add(productId, 1);
+      toast({
+        title: "Added to Cart",
+        description: "Product added to your cart successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add product to cart",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddToWishlist = async (productId: string) => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to add items to wishlist",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await wishlistAPI.add(productId);
+      toast({
+        title: "Added to Wishlist",
+        description: "Product added to your wishlist successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add product to wishlist",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,31 +198,42 @@ const Shop = () => {
       {/* Products Grid */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {filteredProducts.map((product, index) => (
+          {loading ? (
+            <div className="text-center py-16">
+              <p className="text-xl text-muted-foreground">Loading products...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {products.map((product, index) => (
               <Card
-                key={product.id}
+                key={product._id}
                 className="card-hover group border-0 shadow-medium overflow-hidden animate-fade-in"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="relative overflow-hidden">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
+                  <Link to={`/product/${product._id}`}>
+                    <img
+                      src={`http://localhost:5000${product.images[0]}`}
+                      alt={product.name}
+                      className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                  </Link>
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <Button
                       variant="ghost"
                       size="icon"
                       className="bg-white/90 text-primary hover:bg-white hover:text-primary mb-2"
+                      onClick={() => handleAddToWishlist(product._id)}
                     >
                       <Heart className="h-5 w-5" />
                     </Button>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
-                    <Button className="w-full bg-white text-primary hover:bg-white/90">
+                    <Button 
+                      className="w-full bg-white text-primary hover:bg-white/90"
+                      onClick={() => handleAddToCart(product._id)}
+                    >
                       <ShoppingBag className="h-4 w-4 mr-2" />
                       Add to Cart
                     </Button>
@@ -175,16 +241,19 @@ const Shop = () => {
                 </div>
                 <CardContent className="p-6">
                   <p className="text-sm text-accent font-medium mb-2">{product.category}</p>
-                  <h3 className="text-lg font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">
-                    {product.name}
-                  </h3>
+                  <Link to={`/product/${product._id}`}>
+                    <h3 className="text-lg font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">
+                      {product.name}
+                    </h3>
+                  </Link>
                   <p className="text-xl font-bold text-primary">${product.price}</p>
                 </CardContent>
               </Card>
             ))}
-          </div>
-
-          {filteredProducts.length === 0 && (
+            </div>
+          )}
+          
+          {!loading && products.length === 0 && (
             <div className="text-center py-16">
               <p className="text-xl text-muted-foreground">No products found matching your criteria.</p>
             </div>

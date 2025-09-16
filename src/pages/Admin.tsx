@@ -1,12 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LogIn, UserPlus, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Admin = () => {
+  const navigate = useNavigate();
+  const { login, register } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
@@ -19,11 +23,22 @@ const Admin = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically authenticate with your backend
-    toast({
-      title: "Login Successful",
-      description: "Welcome back to the admin panel!",
-    });
+    
+    login(loginData.email, loginData.password)
+      .then(() => {
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        });
+        navigate('/');
+      })
+      .catch((error) => {
+        toast({
+          title: "Login Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      });
   };
 
   const handleRegister = (e: React.FormEvent) => {
@@ -36,11 +51,22 @@ const Admin = () => {
       });
       return;
     }
-    // Here you would typically register with your backend
-    toast({
-      title: "Registration Successful",
-      description: "Your admin account has been created!",
-    });
+    
+    register(registerData.name, registerData.email, registerData.password)
+      .then(() => {
+        toast({
+          title: "Registration Successful",
+          description: "Your account has been created!",
+        });
+        navigate('/');
+      })
+      .catch((error) => {
+        toast({
+          title: "Registration Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      });
   };
 
   const handleLoginInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

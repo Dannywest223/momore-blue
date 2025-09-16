@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Search, Heart, ShoppingBag } from "lucide-react";
+import { Menu, X, Search, Heart, ShoppingBag, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import logoImage from "../assets/logo.jpg";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -64,12 +72,54 @@ const Header = () => {
               <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
                 <Search className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-foreground hover:text-primary"
+                asChild
+              >
+                <Link to="/wishlist">
                 <Heart className="h-5 w-5" />
+                </Link>
               </Button>
-              <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-foreground hover:text-primary"
+                asChild
+              >
+                <Link to="/cart">
                 <ShoppingBag className="h-5 w-5" />
+                </Link>
               </Button>
+              
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem className="font-medium">
+                      {user.name}
+                    </DropdownMenuItem>
+                    {user.isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/dashboard">Admin Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={logout}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button variant="ghost" asChild>
+                  <Link to="/admin">Login</Link>
+                </Button>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -100,15 +150,31 @@ const Header = () => {
                   </Link>
                 ))}
                 <div className="flex items-center space-x-4 pt-4">
-                  <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
+                  <Button variant="ghost" size="icon" className="text-foreground hover:text-primary" asChild>
+                    <Link to="/wishlist">
                     <Search className="h-5 w-5" />
+                    </Link>
                   </Button>
-                  <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
+                  <Button variant="ghost" size="icon" className="text-foreground hover:text-primary" asChild>
+                    <Link to="/wishlist">
                     <Heart className="h-5 w-5" />
+                    </Link>
                   </Button>
-                  <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
+                  <Button variant="ghost" size="icon" className="text-foreground hover:text-primary" asChild>
+                    <Link to="/cart">
                     <ShoppingBag className="h-5 w-5" />
+                    </Link>
                   </Button>
+                  {user ? (
+                    <Button variant="ghost" onClick={logout}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" asChild>
+                      <Link to="/admin">Login</Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
