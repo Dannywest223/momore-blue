@@ -61,22 +61,31 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
           )}
 
           {searchResults.map((product) => (
-            <Link
-              key={product._id}
-              to={`/product/${product._id}`}
-              onClick={handleClose}
-              className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <img
-                src={`http://localhost:5000${product.images[0]}`}
-                alt={product.name}
-                className="w-12 h-12 object-cover rounded"
-              />
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-900">{product.name}</h3>
-                <p className="text-sm text-gray-500">${product.price}</p>
-              </div>
-            </Link>
+           <Link
+           key={product._id}
+           to={`/product/${product._id}`}
+           onClick={handleClose}
+           className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+         >
+           <img
+             src={
+               product.images && product.images.length > 0
+                 ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${product.images[0]}`
+                 : 'https://via.placeholder.com/48x48?text=No+Image'
+             }
+             alt={product.name}
+             className="w-12 h-12 object-cover rounded"
+             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+               const target = e.target as HTMLImageElement;
+               target.src = 'https://via.placeholder.com/48x48?text=Image+Error';
+             }}
+           />
+           <div className="flex-1">
+             <h3 className="font-medium text-gray-900">{product.name}</h3>
+             <p className="text-sm text-gray-500">${product.price}</p>
+           </div>
+         </Link>
+         
           ))}
         </div>
       </div>

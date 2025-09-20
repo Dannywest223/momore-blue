@@ -293,23 +293,25 @@ const FeaturedProducts = () => {
                 >
                   {/* Image Container */}
                   <div className="relative">
-                    <Link to={`/product/${product._id}`}>
-                      <div className="image-wrapper">
-                        <img
-                          src={product.images && product.images.length > 0 
-                            ? `http://localhost:5000${product.images[0]}`
-                            : 'https://via.placeholder.com/400x300?text=No+Image'
-                          }
-                          alt={product.name}
-                          className="product-image"
-                          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
-                          }}
-                        />
-                        <div className="overlay"></div>
-                      </div>
-                    </Link>
+                  <Link to={`/product/${product._id}`}>
+  <div className="image-wrapper">
+    <img
+      src={
+        product.images && product.images.length > 0
+          ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${product.images[0]}`
+          : 'https://via.placeholder.com/400x300?text=No+Image'
+      }
+      alt={product.name}
+      className="product-image"
+      onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        const target = e.target as HTMLImageElement;
+        target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
+      }}
+    />
+    <div className="overlay"></div>
+  </div>
+</Link>
+
                     
                     {/* Wishlist Button */}
                     <button

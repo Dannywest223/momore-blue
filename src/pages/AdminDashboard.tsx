@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 
+
+
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -39,7 +41,9 @@ const AdminDashboard = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/products');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/products`
+      );
       const data = await response.json();
       setProducts(data.products || []);
     } catch (error) {
@@ -48,6 +52,7 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
+  
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -83,9 +88,9 @@ const AdminDashboard = () => {
 
     try {
       const url = editingProduct
-        ? `http://localhost:5000/api/products/${editingProduct._id}`
-        : 'http://localhost:5000/api/products';
-      
+        ? `${import.meta.env.VITE_API_URL}/products/${editingProduct._id}`
+        : `${import.meta.env.VITE_API_URL}/products`;
+    
       const method = editingProduct ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
