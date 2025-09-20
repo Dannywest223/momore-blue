@@ -15,4 +15,10 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      // Explicitly mark socket.io-client as external to prevent build errors
+      external: ["socket.io-client"],
+    },
+  },
 }));
