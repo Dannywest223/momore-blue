@@ -211,13 +211,22 @@ const Shop = () => {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="relative overflow-hidden">
-                  <Link to={`/product/${product._id}`}>
-                    <img
-                      src={`http://localhost:5000${product.images[0]}`}
-                      alt={product.name}
-                      className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                  </Link>
+                <Link to={`/product/${product._id}`}>
+  <img
+    src={
+      product.images && product.images.length > 0
+        ? `${import.meta.env.VITE_API_URL}${product.images[0]}`
+        : 'https://via.placeholder.com/400x300?text=No+Image'
+    }
+    alt={product.name}
+    className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110"
+    onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+      const target = e.target as HTMLImageElement;
+      target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
+    }}
+  />
+</Link>
+
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <Button
                       variant="ghost"
