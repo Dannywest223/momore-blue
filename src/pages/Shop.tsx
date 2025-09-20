@@ -215,7 +215,7 @@ const Shop = () => {
   <img
     src={
       product.images && product.images.length > 0
-        ? `${import.meta.env.VITE_API_URL}${product.images[0]}`
+        ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${product.images[0]}`
         : 'https://via.placeholder.com/400x300?text=No+Image'
     }
     alt={product.name}

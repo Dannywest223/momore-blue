@@ -342,7 +342,7 @@ const AdminDashboard = () => {
         <img
           src={
             product.images && product.images.length > 0
-              ? `${import.meta.env.VITE_API_URL}${product.images[0]}`
+              ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${product.images[0]}`
               : 'https://via.placeholder.com/400x300?text=No+Image'
           }
           alt={product.name}
@@ -365,10 +365,18 @@ const AdminDashboard = () => {
         <p className="text-sm text-gray-500 mb-4">Stock: {product.stockQuantity}</p>
 
         <div className="flex space-x-2">
-          <Button size="sm" variant="outline" onClick={() => handleEdit(product)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleEdit(product)}
+          >
             <Edit className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="destructive" onClick={() => handleDelete(product._id)}>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => handleDelete(product._id)}
+          >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
