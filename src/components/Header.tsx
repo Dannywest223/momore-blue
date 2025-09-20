@@ -150,13 +150,20 @@ const Header = () => {
                   <DropdownMenuContent 
                     align="end" 
                     sideOffset={8}
-                    className="border-primary/20 shadow-elegant bg-background/95 backdrop-blur-md min-w-[200px] z-[10001]"
+                    className="border-primary/20 shadow-2xl bg-white dark:bg-gray-900 backdrop-blur-md min-w-[200px] z-[50000]"
                     style={{ 
                       position: 'fixed',
-                      zIndex: 10001
+                      zIndex: 50000,
+                      maxWidth: '200px',
+                      right: '16px',
+                      marginTop: '8px',
+                      border: '1px solid hsl(var(--primary) / 0.2)',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+                      borderRadius: '8px',
+                      overflow: 'visible'
                     }}
                   >
-                    <DropdownMenuItem className="font-medium cursor-default focus:bg-transparent">
+                    <DropdownMenuItem className="font-medium cursor-default focus:bg-transparent hover:bg-transparent">
                       <div className="flex flex-col">
                         <span className="font-semibold text-primary">{user.name}</span>
                         <span className="text-xs text-muted-foreground">{user.email}</span>
@@ -176,7 +183,7 @@ const Header = () => {
                     )}
                     <DropdownMenuItem 
                       onClick={logout} 
-                      className="cursor-pointer hover:bg-red-50 focus:bg-red-50 text-red-600 focus:text-red-600"
+                      className="cursor-pointer hover:bg-red-50 focus:bg-red-50 text-red-600 focus:text-red-600 dark:hover:bg-red-950 dark:focus:bg-red-950"
                     >
                       <LogOut className="h-4 w-4 mr-2" />
                       Logout
@@ -222,7 +229,10 @@ const Header = () => {
                     variant="ghost" 
                     size="icon" 
                     className="text-foreground hover:text-primary hover:bg-primary/10"
-                    onClick={() => setIsSearchOpen(true)}
+                    onClick={() => {
+                      setIsSearchOpen(true);
+                      setIsMenuOpen(false);
+                    }}
                   >
                     <Search className="h-5 w-5" />
                   </Button>
@@ -312,7 +322,12 @@ const Header = () => {
       {/* Spacer to prevent content from hiding behind fixed header and banner */}
       <div className="h-[140px]"></div>
 
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      {/* Search Modal with Higher Z-Index */}
+      {isSearchOpen && (
+        <div className="fixed inset-0 z-[60000]">
+          <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+        </div>
+      )}
     </>
   );
 };

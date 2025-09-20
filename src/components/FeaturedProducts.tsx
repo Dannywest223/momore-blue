@@ -23,6 +23,79 @@ interface Product {
   updatedAt: string;
 }
 
+// Image Carousel Component
+const ImageCarousel = ({ images, productName }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (images.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+      }, 3000); // Change image every 3 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [images.length]);
+
+  if (!images || images.length === 0) {
+    return (
+      <img
+        src="https://via.placeholder.com/400x300?text=No+Image"
+        alt={productName}
+        className="w-full h-full object-contain transition-transform duration-300"
+        loading="lazy"
+      />
+    );
+  }
+
+  if (images.length === 1) {
+    return (
+      <img
+        src={`${import.meta.env.VITE_API_URL.replace('/api', '')}${images[0]}`}
+        alt={productName}
+        className="w-full h-full object-contain transition-transform duration-300"
+        loading="lazy"
+        onError={(e) => {
+          e.target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="relative w-full h-full overflow-hidden">
+      {images.map((image, index) => (
+        <img
+          key={index}
+          src={`${import.meta.env.VITE_API_URL.replace('/api', '')}${image}`}
+          alt={`${productName} ${index + 1}`}
+          className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ${
+            index === currentIndex 
+              ? 'opacity-100 transform scale-100' 
+              : 'opacity-0 transform scale-95'
+          }`}
+          loading="lazy"
+          onError={(e) => {
+            e.target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
+          }}
+        />
+      ))}
+      
+      {/* Image indicators */}
+      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+        {images.map((_, index) => (
+          <div
+            key={index}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              index === currentIndex ? 'bg-white shadow-lg' : 'bg-white/50'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const FeaturedProducts = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,17 +246,17 @@ const FeaturedProducts = () => {
 
   if (loading) {
     return (
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gradient-to-br from-background via-background/95 to-muted/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="bg-white rounded-lg shadow-lg p-12 max-w-2xl mx-auto border">
-              <h2 className="text-4xl font-serif text-gray-900 mb-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-12 max-w-2xl mx-auto border border-primary/10">
+              <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-6">
                 Featured Products
               </h2>
-              <div className="w-24 h-px bg-gray-300 mx-auto mb-8"></div>
+              <div className="w-24 h-1 bg-gradient-to-r from-primary to-primary/50 mx-auto mb-8 rounded-full"></div>
               <div className="flex items-center justify-center gap-2">
-                <RefreshCw className="w-5 h-5 animate-spin" />
-                <p className="text-gray-600 text-lg">
+                <RefreshCw className="w-5 h-5 animate-spin text-primary" />
+                <p className="text-muted-foreground text-lg">
                   Loading our featured products...
                 </p>
               </div>
@@ -196,67 +269,44 @@ const FeaturedProducts = () => {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{
-  __html: `
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .fade-in-up { animation: fadeInUp 0.6s ease-out both; }
-    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .modern-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    .modern-hover { transition: all 0.4s ease; }
-    .modern-hover:hover { transform: translateY(-8px); box-shadow: 0 12px 40px rgba(0,0,0,0.15); }
-
-    .image-wrapper {
-      position: relative;
-      width: 100%;
-      height: 320px;
-      overflow: hidden;
-      border-radius: 12px 12px 0 0;
-      background: #ffffff;
-    }
-
-    .product-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover; /* fill container */
-      display: block;
-      border-radius: 12px 12px 0 0;
-    }
-
-    .overlay {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(135deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.02) 50%, rgba(0,0,0,0.05) 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .product-card:hover .overlay { opacity: 1; }
-    .wishlist-btn { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease; }
-    .wishlist-btn:hover { background: rgba(255,255,255,1); transform: scale(1.1); }
-    .wishlist-btn.active { background: rgba(239,68,68,0.95); color: white; }
-    .stock-badge { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
-    .featured-badge { background: linear-gradient(135deg,#fbbf24,#f59e0b); color:#92400e; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.1); }
-  `
-}} />
+      {/* Lightweight CSS */}
+      <style>{`
+        .product-fade-in { animation: fadeIn 0.6s ease-out both; }
+        .product-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .product-hover:hover { transform: translateY(-4px); }
+        .product-image-container { 
+          position: relative; 
+          width: 100%; 
+          height: 280px; 
+          overflow: hidden; 
+          border-radius: 16px 16px 0 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
       
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
+      <section className="py-20 bg-gradient-to-br from-background via-background/95 to-muted/10 overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(var(--primary),0.03)_0%,transparent_50%)] pointer-events-none"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Elegant Header */}
           <div className="text-center mb-16">
-            <div className="bg-white rounded-2xl shadow-lg p-12 max-w-4xl mx-auto border">
-              <h2 className="text-4xl md:text-5xl font-serif text-gray-900 mb-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-12 max-w-4xl mx-auto border border-primary/10">
+              <div className="inline-block mb-4">
+                <span className="text-sm font-semibold text-primary/70 uppercase tracking-wider bg-primary/10 px-4 py-2 rounded-full">
+                  Premium Collection
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent mb-6">
                 Featured Products
               </h2>
-              <div className="w-24 h-px bg-gray-300 mx-auto mb-8"></div>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
-                Discover our complete collection of premium products
+              <div className="w-24 h-1 bg-gradient-to-r from-primary to-primary/50 mx-auto mb-8 rounded-full"></div>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
+                Discover our complete collection of premium products, carefully curated for excellence
               </p>
               
-              <div className="mt-6 flex flex-col items-center gap-4">
-                <p className="text-sm text-gray-500">
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <p className="text-sm text-muted-foreground/70">
                   Showing {featuredProducts?.length || 0} total products
                 </p>
                 <Button 
@@ -264,7 +314,7 @@ const FeaturedProducts = () => {
                   variant="outline"
                   size="sm"
                   disabled={isRefreshing}
-                  className="bg-white hover:bg-gray-50 border-gray-300"
+                  className="border-primary/30 hover:bg-primary hover:text-white transition-all duration-300"
                 >
                   {isRefreshing ? (
                     <>
@@ -282,57 +332,43 @@ const FeaturedProducts = () => {
             </div>
           </div>
 
-          {/* Products Grid */}
+          {/* Optimized Products Grid */}
           {featuredProducts && featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
               {featuredProducts.map((product: Product, index: number) => (
-                <div
+                <Card
                   key={product._id}
-                  className="product-card bg-white rounded-2xl modern-shadow modern-hover overflow-hidden fade-in-up"
+                  className="product-card bg-white dark:bg-gray-900 border-0 shadow-lg hover:shadow-2xl product-hover overflow-hidden rounded-2xl product-fade-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  {/* Image Container */}
-                  <div className="relative">
-                  <Link to={`/product/${product._id}`}>
-  <div className="image-wrapper">
-    <img
-      src={
-        product.images && product.images.length > 0
-          ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${product.images[0]}`
-          : 'https://via.placeholder.com/400x300?text=No+Image'
-      }
-      alt={product.name}
-      className="product-image"
-      onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-        const target = e.target as HTMLImageElement;
-        target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
-      }}
-    />
-    <div className="overlay"></div>
-  </div>
-</Link>
-
+                  {/* Optimized Image Container with Carousel - NO BLUR */}
+                  <div className="product-image-container bg-gray-50">
+                    <Link to={`/product/${product._id}`} className="block h-full">
+                      <ImageCarousel images={product.images} productName={product.name} />
+                    </Link>
                     
                     {/* Wishlist Button */}
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleWishlistToggle(product)}
-                      className={`wishlist-btn absolute top-4 right-4 w-11 h-11 rounded-full flex items-center justify-center shadow-lg ${
-                        isInWishlist(product._id) ? 'active' : ''
+                      className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-300 hover:scale-110 ${
+                        isInWishlist(product._id) ? 'text-red-500 bg-red-50' : 'text-gray-600 hover:text-red-500'
                       }`}
                     >
                       <Heart
-                        className={`w-5 h-5 ${
-                          isInWishlist(product._id) ? 'fill-current' : ''
+                        className={`w-4 h-4 transition-all ${
+                          isInWishlist(product._id) ? 'fill-current scale-110' : ''
                         }`}
                       />
-                    </button>
+                    </Button>
 
-                    {/* Stock indicator */}
-                    <div className="absolute bottom-4 left-4">
-                      <span className={`stock-badge text-xs px-3 py-1.5 rounded-full font-medium ${
+                    {/* Stock Badge */}
+                    <div className="absolute bottom-3 left-3">
+                      <span className={`text-xs px-3 py-1.5 rounded-full font-medium shadow-md ${
                         product.inStock 
-                          ? 'text-green-700' 
-                          : 'text-red-700'
+                          ? 'bg-green-100/90 text-green-700' 
+                          : 'bg-red-100/90 text-red-700'
                       }`}>
                         {product.inStock ? `${product.stockQuantity} in stock` : 'Out of stock'}
                       </span>
@@ -340,72 +376,72 @@ const FeaturedProducts = () => {
 
                     {/* Featured Badge */}
                     {product.featured && (
-                      <div className="absolute top-4 left-4">
-                        <span className="featured-badge text-xs px-3 py-1.5 rounded-full shadow-sm">
-                          Featured
+                      <div className="absolute top-3 left-3">
+                        <span className="bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 text-xs px-3 py-1.5 rounded-full font-semibold shadow-md">
+                          ⭐ Featured
                         </span>
                       </div>
                     )}
                   </div>
 
                   {/* Product Info */}
-                  <div className="p-6">
-                    <div className="mb-3">
-                      <span className="text-sm text-blue-600 uppercase tracking-wider font-medium">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-primary font-medium uppercase tracking-wider bg-primary/10 px-2 py-1 rounded-md">
                         {product.category}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(product.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                     
                     <Link to={`/product/${product._id}`}>
-                      <h3 className="text-xl font-serif text-gray-900 mb-3 hover:text-blue-600 transition-colors cursor-pointer leading-tight">
+                      <h3 className="text-lg font-bold text-foreground hover:text-primary transition-colors cursor-pointer leading-tight line-clamp-2">
                         {product.name}
                       </h3>
                     </Link>
 
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                       {product.description}
                     </p>
                     
-                    <div className="flex items-center justify-between mb-6">
-                      <span className="text-2xl font-bold text-gray-900">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-bold text-foreground">
                         ${product.price.toFixed(2)}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        Added {new Date(product.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
                     {/* Add to Cart Button */}
-                    <button
+                    <Button
                       onClick={() => handleAddToCart(product)}
                       disabled={!product.inStock}
-                      className={`w-full py-3.5 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 font-medium ${
+                      className={`w-full transition-all duration-300 ${
                         product.inStock
-                          ? 'bg-gray-900 text-white hover:bg-gray-800 hover:shadow-lg transform hover:-translate-y-0.5'
+                          ? 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white shadow-md hover:shadow-lg hover:scale-[1.02]'
                           : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                       }`}
                     >
-                      <ShoppingBag className="w-4 h-4" />
+                      <ShoppingBag className="w-4 h-4 mr-2" />
                       {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-                    </button>
-                  </div>
-                </div>
+                    </Button>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           ) : (
             <div className="text-center">
-              <div className="bg-white rounded-2xl shadow-lg p-12 max-w-2xl mx-auto border">
-                <h3 className="text-2xl font-serif text-gray-900 mb-4">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-12 max-w-2xl mx-auto border border-primary/10">
+                <h3 className="text-2xl font-bold text-foreground mb-4">
                   No Products Found
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-muted-foreground mb-6">
                   It looks like there are no products in your database. Add some products to see them here.
                 </p>
                 <div className="flex gap-4 justify-center">
                   <Button 
                     onClick={handleRefresh} 
                     disabled={isRefreshing}
-                    className="bg-gray-900 hover:bg-gray-800"
+                    className="bg-primary hover:bg-primary/90"
                   >
                     {isRefreshing ? (
                       <>
@@ -417,7 +453,7 @@ const FeaturedProducts = () => {
                     )}
                   </Button>
                   <Link to="/shop">
-                    <Button variant="outline">
+                    <Button variant="outline" className="border-primary/30 hover:bg-primary hover:text-white">
                       View Shop Page
                     </Button>
                   </Link>
@@ -430,9 +466,13 @@ const FeaturedProducts = () => {
           {featuredProducts && featuredProducts.length > 0 && (
             <div className="text-center mt-16">
               <Link to="/shop">
-                <button className="bg-white border-2 border-gray-900 text-gray-900 px-8 py-3 rounded-xl hover:bg-gray-900 hover:text-white transition-all duration-300 font-medium text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-semibold"
+                >
                   View All Products
-                </button>
+                  <ShoppingBag className="w-5 h-5 ml-2" />
+                </Button>
               </Link>
             </div>
           )}

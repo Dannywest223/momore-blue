@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Edit, Trash2, Upload } from 'lucide-react';
+import { Plus, Package, Edit, Trash2, Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,137 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 
+// Image Preview Carousel Component for Admin
+const AdminImageCarousel = ({ images, productName, onRemoveImage = null, isPreview = false }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
 
+  useEffect(() => {
+    if (images.length > 1 && !isPreview) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [images.length, isPreview]);
+
+  if (!images || images.length === 0) {
+    return (
+      <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+        <span className="text-gray-400">No images</span>
+      </div>
+    );
+  }
+
+  const nextImage = () => {
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  if (images.length === 1) {
+    return (
+      <div className="relative w-full h-48 bg-gray-50 rounded-lg overflow-hidden">
+        <img
+          src={
+            isPreview 
+              ? (typeof images[0] === 'string' ? images[0] : URL.createObjectURL(images[0]))
+              : `${import.meta.env.VITE_API_URL.replace('/api', '')}${images[0]}`
+          }
+          alt={productName}
+          className="w-full h-full object-contain"
+          onError={(e) => {
+            e.target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
+          }}
+        />
+        {onRemoveImage && (
+          <Button
+            size="icon"
+            variant="destructive"
+            className="absolute top-2 right-2 w-6 h-6 rounded-full"
+            onClick={() => onRemoveImage(0)}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-48 bg-gray-50 rounded-lg overflow-hidden">
+      {images.map((image, index) => (
+        <img
+          key={index}
+          src={
+            isPreview 
+              ? (typeof image === 'string' ? image : URL.createObjectURL(image))
+              : `${import.meta.env.VITE_API_URL.replace('/api', '')}${image}`
+          }
+          alt={`${productName} ${index + 1}`}
+          className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ${
+            index === currentIndex 
+              ? 'opacity-100 transform scale-100' 
+              : 'opacity-0 transform scale-95'
+          }`}
+          onError={(e) => {
+            e.target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
+          }}
+        />
+      ))}
+      
+      {/* Navigation Arrows */}
+      <Button
+        onClick={prevImage}
+        variant="ghost"
+        size="icon"
+        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white shadow-lg w-8 h-8"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </Button>
+      <Button
+        onClick={nextImage}
+        variant="ghost"
+        size="icon"
+        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white shadow-lg w-8 h-8"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </Button>
+
+      {/* Remove button */}
+      {onRemoveImage && (
+        <Button
+          size="icon"
+          variant="destructive"
+          className="absolute top-2 right-2 w-6 h-6 rounded-full"
+          onClick={() => onRemoveImage(currentIndex)}
+        >
+          <X className="w-3 h-3" />
+        </Button>
+      )}
+
+      {/* Image indicators */}
+      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              index === currentIndex ? 'bg-white shadow-lg' : 'bg-white/50'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Image counter */}
+      <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+        {currentIndex + 1} / {images.length}
+      </div>
+    </div>
+  );
+};
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -20,6 +150,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [imagePreview, setImagePreview] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -52,7 +183,6 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
-  
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -63,10 +193,42 @@ const AdminDashboard = () => {
   };
 
   const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const maxImages = 5; // Maximum 5 images
+    
+    if (files.length > maxImages) {
+      toast({
+        title: "Too many images",
+        description: `Please select maximum ${maxImages} images`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
-      images: Array.from(e.target.files)
+      images: files
     }));
+
+    // Create preview URLs
+    const previewUrls = files.map(file => URL.createObjectURL(file));
+    setImagePreview(previewUrls);
+  };
+
+  const removeImageFromPreview = (indexToRemove) => {
+    const newImages = formData.images.filter((_, index) => index !== indexToRemove);
+    const newPreviews = imagePreview.filter((_, index) => index !== indexToRemove);
+    
+    setFormData(prev => ({
+      ...prev,
+      images: newImages
+    }));
+    setImagePreview(newPreviews);
+
+    // Clean up the URL object
+    if (imagePreview[indexToRemove]) {
+      URL.revokeObjectURL(imagePreview[indexToRemove]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -79,7 +241,6 @@ const AdminDashboard = () => {
     formDataToSend.append('price', formData.price);
     formDataToSend.append('category', formData.category);
     formDataToSend.append('featured', formData.featured.toString());
-
     formDataToSend.append('stockQuantity', formData.stockQuantity);
     
     formData.images.forEach((image) => {
@@ -107,6 +268,7 @@ const AdminDashboard = () => {
           description: `Product ${editingProduct ? 'updated' : 'created'} successfully`,
         });
         
+        // Reset form and previews
         setFormData({
           name: '',
           description: '',
@@ -116,6 +278,10 @@ const AdminDashboard = () => {
           stockQuantity: '',
           images: []
         });
+        
+        // Clean up preview URLs
+        imagePreview.forEach(url => URL.revokeObjectURL(url));
+        setImagePreview([]);
         
         setShowAddForm(false);
         setEditingProduct(null);
@@ -142,6 +308,7 @@ const AdminDashboard = () => {
       stockQuantity: product.stockQuantity,
       images: []
     });
+    setImagePreview([]);
     setEditingProduct(product);
     setShowAddForm(true);
   };
@@ -152,7 +319,7 @@ const AdminDashboard = () => {
     const token = localStorage.getItem('token');
 
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/products/${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -177,6 +344,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: '',
+      category: '',
+      featured: false,
+      stockQuantity: '',
+      images: []
+    });
+    imagePreview.forEach(url => URL.revokeObjectURL(url));
+    setImagePreview([]);
+    setShowAddForm(false);
+    setEditingProduct(null);
+  };
+
   if (!user || !user.isAdmin) {
     return null;
   }
@@ -187,19 +370,7 @@ const AdminDashboard = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <Button
-            onClick={() => {
-              setShowAddForm(true);
-              setEditingProduct(null);
-              setFormData({
-                name: '',
-                description: '',
-                price: '',
-                category: '',
-                featured: false,
-                stockQuantity: '',
-                images: []
-              });
-            }}
+            onClick={resetForm}
             className="bg-primary hover:bg-primary/90"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -215,7 +386,7 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="name">Product Name</Label>
@@ -278,7 +449,7 @@ const AdminDashboard = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="images">Product Images</Label>
+                  <Label htmlFor="images">Product Images (Max 5)</Label>
                   <Input
                     id="images"
                     type="file"
@@ -286,7 +457,25 @@ const AdminDashboard = () => {
                     accept="image/*"
                     onChange={handleImageChange}
                     required={!editingProduct}
+                    className="mb-4"
                   />
+                  
+                  {/* Image Preview */}
+                  {imagePreview.length > 0 && (
+                    <div className="mt-4">
+                      <Label className="text-sm font-medium mb-2 block">Image Preview ({imagePreview.length} images):</Label>
+                      <AdminImageCarousel 
+                        images={imagePreview} 
+                        productName={formData.name || "Product"} 
+                        onRemoveImage={removeImageFromPreview}
+                        isPreview={true}
+                      />
+                    </div>
+                  )}
+                  
+                  <p className="text-sm text-muted-foreground mt-2">
+                    You can upload 1-5 images. Multiple images will display as an animated carousel.
+                  </p>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -309,10 +498,7 @@ const AdminDashboard = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      setShowAddForm(false);
-                      setEditingProduct(null);
-                    }}
+                    onClick={resetForm}
                   >
                     Cancel
                   </Button>
@@ -336,55 +522,50 @@ const AdminDashboard = () => {
               <p>No products found. Add your first product!</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-  {products.map((product) => (
-    <Card key={product._id} className="border">
-      <div className="relative">
-        <img
-          src={
-            product.images && product.images.length > 0
-              ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${product.images[0]}`
-              : 'https://via.placeholder.com/400x300?text=No+Image'
-          }
-          alt={product.name}
-          className="w-full h-48 object-cover rounded-t-lg"
-          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-            const target = e.target as HTMLImageElement;
-            target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
-          }}
-        />
-        {product.featured && (
-          <span className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded">
-            Featured
-          </span>
-        )}
-      </div>
-      <CardContent className="p-4">
-        <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-        <p className="text-gray-600 text-sm mb-2">{product.category}</p>
-        <p className="text-primary font-bold text-xl mb-2">${product.price}</p>
-        <p className="text-sm text-gray-500 mb-4">Stock: {product.stockQuantity}</p>
+                {products.map((product) => (
+                  <Card key={product._id} className="border">
+                    <div className="relative">
+                      <AdminImageCarousel 
+                        images={product.images} 
+                        productName={product.name} 
+                      />
+                      {product.featured && (
+                        <span className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded">
+                          Featured
+                        </span>
+                      )}
+                      {product.images && product.images.length > 1 && (
+                        <span className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 text-xs rounded">
+                          {product.images.length} images
+                        </span>
+                      )}
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                      <p className="text-gray-600 text-sm mb-2">{product.category}</p>
+                      <p className="text-primary font-bold text-xl mb-2">${product.price}</p>
+                      <p className="text-sm text-gray-500 mb-4">Stock: {product.stockQuantity}</p>
 
-        <div className="flex space-x-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleEdit(product)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => handleDelete(product._id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  ))}
-</div>
-
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(product)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(product._id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
