@@ -8,6 +8,7 @@ const socketIo = require('socket.io');
 const path = require('path');
 require('dotenv').config();
 
+// Routes
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
@@ -17,12 +18,12 @@ const orderRoutes = require('./routes/orders');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: 'http://localhost:8080',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  },
-});
+
+// Allowed origins for CORS
+const allowedOrigins = [
+  'http://localhost:8080', 
+  'https://momore2.netlify.app' // <-- Your Netlify frontend URL
+];
 
 // Middleware
 app.use(
@@ -32,7 +33,14 @@ app.use(
 );
 
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true); // allow non-browser requests (like Postman)
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
@@ -49,7 +57,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serve uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Socket.io connection
+// Socket.io setup
+const io = socketIo(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+  },
+});
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
