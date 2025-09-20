@@ -5,13 +5,14 @@ const { auth } = require('../middleware/auth');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 
-// Register route
+// Register route - Works for both normal users and admin
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
     
     console.log('Registration attempt:', { name, email: email?.toLowerCase() });
 
+    // Validate required fields
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
     }
@@ -30,18 +31,21 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters long' });
     }
 
+    // Check if user already exists
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       console.log('User already exists:', normalizedEmail);
       return res.status(400).json({ message: 'User already exists with this email' });
     }
 
-    // Determine if this user is admin (normalize admin email too)
+    // Determine if this user should be admin
     const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
     const isAdmin = normalizedEmail === adminEmail;
 
-    // Hash password
-    const saltRounds = 12; // Increased from 10 for better security
+    console.log('Admin check:', { normalizedEmail, adminEmail, isAdmin });
+
+    // Hash password with consistent salt rounds
+    const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Create and save user
@@ -53,7 +57,11 @@ router.post('/register', async (req, res) => {
     });
     
     const savedUser = await user.save();
-    console.log('User registered successfully:', { id: savedUser._id, email: normalizedEmail, isAdmin });
+    console.log('User registered successfully:', { 
+      id: savedUser._id, 
+      email: normalizedEmail, 
+      isAdmin: savedUser.isAdmin 
+    });
 
     // Generate JWT token
     const token = jwt.sign(
@@ -83,121 +91,160 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login route
+// Login route - Handles both normal users and admin
 router.post('/login', async (req, res) => {
   try {
     let { email, password } = req.body;
     
-    console.log('Login attempt for email:', email);
+    console.log('=== LOGIN ATTEMPT ===');
+    console.log('Email provided:', email);
+    console.log('Password provided:', !!password);
 
+    // Validate required fields
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Normalize email to lowercase and trim
+    // Normalize inputs
     email = email.toLowerCase().trim();
     password = password.trim();
     
     console.log('Normalized email:', email);
-    
-    // Try to find user in database first
+
+    // First, always try to find user in database
     const user = await User.findOne({ email });
-    console.log('User found in database:', user ? 'Yes' : 'No');
-    
+    console.log('User lookup result:', {
+      found: !!user,
+      email: user?.email,
+      isAdmin: user?.isAdmin,
+      userId: user?._id?.toString()
+    });
+
     if (user) {
-      // User exists in database - verify password
-      const isMatch = await bcrypt.compare(password, user.password);
-      console.log('Password match result:', isMatch);
-
-      if (!isMatch) {
-        console.log('Password incorrect for email:', email);
-        return res.status(400).json({ message: 'Invalid email or password' });
-      }
-
-      // Password matches - generate token and login
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      console.log('User found in database - verifying password');
       
-      console.log('Login successful for user:', { id: user._id, email: user.email, isAdmin: user.isAdmin });
+      try {
+        // Compare password with stored hash
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log('Password validation result:', isPasswordValid);
 
-      return res.json({
-        token,
-        user: { 
-          id: user._id, 
-          name: user.name, 
-          email: user.email, 
-          isAdmin: user.isAdmin 
+        if (isPasswordValid) {
+          console.log('✓ Password valid - generating token for user');
+          
+          // Generate JWT token
+          const token = jwt.sign(
+            { userId: user._id }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '7d' }
+          );
+          
+          console.log('✓ Login successful for:', {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+            isAdmin: user.isAdmin
+          });
+
+          return res.json({
+            token,
+            user: { 
+              id: user._id, 
+              name: user.name, 
+              email: user.email, 
+              isAdmin: user.isAdmin 
+            }
+          });
+        } else {
+          console.log('✗ Password invalid for existing user');
+          return res.status(400).json({ message: 'Invalid email or password' });
         }
-      });
+      } catch (bcryptError) {
+        console.error('Password comparison error:', bcryptError);
+        return res.status(500).json({ message: 'Error verifying password' });
+      }
     }
 
-    // User not in database - check if it's admin trying to login with env credentials
+    // If user not found in database, check if it's admin with env credentials
     const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
     const adminPassword = process.env.ADMIN_PASSWORD;
     
-    console.log('Checking admin credentials:', { 
-      emailMatch: email === adminEmail,
-      hasAdminPassword: !!adminPassword,
-      providedEmail: email,
-      adminEmail: adminEmail
-    });
+    console.log('User not in database - checking admin env credentials');
+    console.log('Admin email match:', email === adminEmail);
+    console.log('Admin password available:', !!adminPassword);
 
     if (email === adminEmail && password === adminPassword && adminPassword) {
-      // Admin login with env credentials - create admin user if doesn't exist
-      console.log('Admin login with env credentials');
+      console.log('Admin env credentials match - creating admin user in database');
       
-      const hashedPassword = await bcrypt.hash(password, 12);
-      const adminUser = new User({ 
-        name: 'Admin', 
-        email: adminEmail, 
-        password: hashedPassword, 
-        isAdmin: true 
-      });
-      
-      const savedAdmin = await adminUser.save();
-      console.log('Admin user created:', savedAdmin._id);
-
-      const token = jwt.sign({ userId: savedAdmin._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-      
-      return res.json({
-        token,
-        user: { 
-          id: savedAdmin._id, 
-          name: savedAdmin.name, 
-          email: savedAdmin.email, 
+      try {
+        // Hash the admin password and create admin user
+        const hashedAdminPassword = await bcrypt.hash(password, 10);
+        const adminUser = new User({ 
+          name: 'Admin', 
+          email: adminEmail, 
+          password: hashedAdminPassword, 
           isAdmin: true 
+        });
+        
+        const savedAdmin = await adminUser.save();
+        console.log('✓ Admin user created in database:', savedAdmin._id);
+
+        // Generate token for admin
+        const token = jwt.sign(
+          { userId: savedAdmin._id }, 
+          process.env.JWT_SECRET, 
+          { expiresIn: '7d' }
+        );
+        
+        return res.json({
+          token,
+          user: { 
+            id: savedAdmin._id, 
+            name: savedAdmin.name, 
+            email: savedAdmin.email, 
+            isAdmin: savedAdmin.isAdmin 
+          }
+        });
+      } catch (adminError) {
+        console.error('Error creating admin user:', adminError);
+        
+        // If admin already exists (duplicate error), find and login
+        if (adminError.code === 11000) {
+          console.log('Admin already exists, finding existing admin');
+          try {
+            const existingAdmin = await User.findOne({ email: adminEmail });
+            if (existingAdmin) {
+              const token = jwt.sign(
+                { userId: existingAdmin._id }, 
+                process.env.JWT_SECRET, 
+                { expiresIn: '7d' }
+              );
+              
+              return res.json({
+                token,
+                user: { 
+                  id: existingAdmin._id, 
+                  name: existingAdmin.name, 
+                  email: existingAdmin.email, 
+                  isAdmin: existingAdmin.isAdmin 
+                }
+              });
+            }
+          } catch (findError) {
+            console.error('Error finding existing admin:', findError);
+          }
         }
-      });
+        
+        return res.status(500).json({ message: 'Error processing admin login' });
+      }
     }
 
-    // Neither regular user nor admin - invalid credentials
-    console.log('No user found and not admin credentials for email:', email);
+    // No user found and not admin credentials
+    console.log('✗ Login failed - user not found and not admin credentials');
+    console.log('=== LOGIN ATTEMPT END ===');
     return res.status(400).json({ message: 'Invalid email or password' });
     
   } catch (error) {
     console.error('Login error:', error);
-    
-    // Handle duplicate key error (in case admin creation conflicts)
-    if (error.code === 11000) {
-      console.log('Duplicate key error during admin creation - trying to find existing admin');
-      try {
-        const existingAdmin = await User.findOne({ email: process.env.ADMIN_EMAIL?.toLowerCase().trim() });
-        if (existingAdmin) {
-          const token = jwt.sign({ userId: existingAdmin._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-          return res.json({
-            token,
-            user: { 
-              id: existingAdmin._id, 
-              name: existingAdmin.name, 
-              email: existingAdmin.email, 
-              isAdmin: existingAdmin.isAdmin 
-            }
-          });
-        }
-      } catch (findError) {
-        console.error('Error finding existing admin:', findError);
-      }
-    }
-    
     res.status(500).json({ message: 'Server error during login' });
   }
 });
@@ -209,7 +256,11 @@ router.get('/me', auth, async (req, res) => {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    console.log('Getting current user:', { id: req.user._id, email: req.user.email });
+    console.log('Getting current user:', { 
+      id: req.user._id, 
+      email: req.user.email,
+      isAdmin: req.user.isAdmin 
+    });
 
     res.json({
       user: {
@@ -222,6 +273,37 @@ router.get('/me', auth, async (req, res) => {
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ message: 'Server error getting user info' });
+  }
+});
+
+// TEMPORARY: Password reset route for debugging (remove in production)
+router.post('/reset-password-debug', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    
+    if (!email || !newPassword) {
+      return res.status(400).json({ message: 'Email and new password required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update user password
+    await User.findByIdAndUpdate(user._id, { password: hashedPassword });
+    
+    console.log('Password reset for user:', user.email);
+    
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ message: 'Error resetting password' });
   }
 });
 

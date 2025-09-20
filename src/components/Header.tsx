@@ -40,7 +40,7 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Main Header - Enhanced Fixed Position */}
+      {/* Main Header - Enhanced Fixed Position with proper overflow handling */}
       <header className="fixed top-[36px] left-0 right-0 bg-background/95 backdrop-blur-md border-b shadow-lg z-[9999] supports-[backdrop-filter]:bg-background/60">
         <nav className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -147,16 +147,37 @@ const Header = () => {
                       <User className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="border-primary/20 shadow-elegant">
-                    <DropdownMenuItem className="font-medium">
-                      {user.name}
+                  <DropdownMenuContent 
+                    align="end" 
+                    sideOffset={8}
+                    className="border-primary/20 shadow-elegant bg-background/95 backdrop-blur-md min-w-[200px] z-[10001]"
+                    style={{ 
+                      position: 'fixed',
+                      zIndex: 10001
+                    }}
+                  >
+                    <DropdownMenuItem className="font-medium cursor-default focus:bg-transparent">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-primary">{user.name}</span>
+                        <span className="text-xs text-muted-foreground">{user.email}</span>
+                      </div>
                     </DropdownMenuItem>
+                    <div className="h-px bg-border my-1" />
                     {user.isAdmin && (
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin/dashboard">Admin Dashboard</Link>
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem asChild className="cursor-pointer hover:bg-primary/10 focus:bg-primary/10">
+                          <Link to="/admin/dashboard" className="flex items-center w-full">
+                            <User className="h-4 w-4 mr-2" />
+                            Admin Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                        <div className="h-px bg-border my-1" />
+                      </>
                     )}
-                    <DropdownMenuItem onClick={logout}>
+                    <DropdownMenuItem 
+                      onClick={logout} 
+                      className="cursor-pointer hover:bg-red-50 focus:bg-red-50 text-red-600 focus:text-red-600"
+                    >
                       <LogOut className="h-4 w-4 mr-2" />
                       Logout
                     </DropdownMenuItem>
@@ -247,10 +268,35 @@ const Header = () => {
                   </Button>
                   
                   {user ? (
-                    <Button variant="ghost" onClick={logout} className="hover:bg-primary/10">
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </Button>
+                    <div className="flex flex-col space-y-2 pl-4 border-l border-primary/20">
+                      <div className="text-sm font-medium text-primary">{user.name}</div>
+                      <div className="text-xs text-muted-foreground">{user.email}</div>
+                      {user.isAdmin && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="justify-start p-0 h-auto text-sm hover:bg-transparent hover:text-primary" 
+                          asChild
+                        >
+                          <Link to="/admin/dashboard" onClick={() => setIsMenuOpen(false)}>
+                            <User className="h-4 w-4 mr-2" />
+                            Admin Dashboard
+                          </Link>
+                        </Button>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                          logout();
+                          setIsMenuOpen(false);
+                        }} 
+                        className="justify-start p-0 h-auto text-sm hover:bg-transparent hover:text-red-600 text-red-600"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </Button>
+                    </div>
                   ) : (
                     <Button variant="ghost" className="hover:bg-primary/10" asChild>
                       <Link to="/admin" onClick={() => setIsMenuOpen(false)}>Login</Link>

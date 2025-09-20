@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUser = async (token: string) => {
     try {
-      console.log('Fetching user with token:', token.substring(0, 20) + '...');
+      console.log('Fetching user with token...');
       
       const res = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: { 
@@ -49,11 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (res.ok) {
         const data = await res.json();
-        console.log('User data received:', data);
+        console.log('User data received:', {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          isAdmin: data.user.isAdmin
+        });
         setUser(data.user);
-        
-        // Don't auto-redirect on initial load, let the user choose where to go
-        // if (data.user.isAdmin) navigate('/admin/dashboard');
       } else {
         console.log('Token invalid or expired, removing from storage');
         localStorage.removeItem('token');
@@ -67,25 +69,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleRedirect = (userData: User) => {
-    console.log('Redirecting user:', userData);
+    console.log('Handling redirect for user:', {
+      email: userData.email,
+      isAdmin: userData.isAdmin
+    });
+    
     if (userData.isAdmin) {
+      console.log('Redirecting admin to /admin/dashboard');
       navigate('/admin/dashboard');
     } else {
-      navigate('/dashboard'); // Changed to a user dashboard instead of home
+      console.log('Redirecting normal user to home page /');
+      navigate('/');
     }
   };
 
   const login = async (email: string, password: string) => {
     try {
-      // Trim inputs
-      email = email.trim().toLowerCase(); // Also normalize email to lowercase
+      // Normalize inputs
+      email = email.trim().toLowerCase();
       password = password.trim();
       
-      console.log('Login attempt for email:', email);
+      console.log('=== LOGIN ATTEMPT ===');
+      console.log('Email:', email);
       console.log('API URL:', `${API_BASE_URL}/auth/login`);
 
       const loginPayload = { email, password };
-      console.log('Login payload:', { email, password: '***' }); // Don't log actual password
 
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
@@ -97,48 +105,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       console.log('Login response status:', res.status);
-      console.log('Login response headers:', Object.fromEntries(res.headers.entries()));
 
       const responseText = await res.text();
-      console.log('Raw response:', responseText);
+      console.log('Login response text:', responseText);
 
       let data;
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
-        console.error('Failed to parse response as JSON:', parseError);
+        console.error('Failed to parse login response:', parseError);
         throw new Error('Server returned invalid response format');
       }
 
       if (!res.ok) {
-        console.error('Login failed with data:', data);
+        console.error('Login failed:', data);
         throw new Error(data.message || `Login failed with status ${res.status}`);
       }
 
-      console.log('Login successful:', { user: data.user, hasToken: !!data.token });
+      console.log('✓ Login successful:', {
+        hasToken: !!data.token,
+        userEmail: data.user?.email,
+        userIsAdmin: data.user?.isAdmin
+      });
 
       if (!data.token) {
         throw new Error('No token received from server');
       }
 
+      // Store token and user data
       localStorage.setItem('token', data.token);
       setUser(data.user);
+      
+      // Redirect based on user type
       handleRedirect(data.user);
+      
     } catch (err: any) {
       console.error('Login error:', err);
-      // Re-throw the error so the UI can show it
       throw new Error(err.message || 'Login failed');
     }
   };
 
   const register = async (name: string, email: string, password: string) => {
     try {
-      // Trim and normalize inputs
+      // Normalize inputs
       name = name.trim();
       email = email.trim().toLowerCase();
       password = password.trim();
       
-      console.log('Register attempt for:', { name, email });
+      console.log('=== REGISTRATION ATTEMPT ===');
+      console.log('Name:', name);
+      console.log('Email:', email);
 
       const registerPayload = { name, email, password };
 
@@ -151,35 +167,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(registerPayload),
       });
 
-      console.log('Register response status:', res.status);
+      console.log('Registration response status:', res.status);
 
       const responseText = await res.text();
-      console.log('Register raw response:', responseText);
+      console.log('Registration response text:', responseText);
 
       let data;
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
-        console.error('Failed to parse response as JSON:', parseError);
+        console.error('Failed to parse registration response:', parseError);
         throw new Error('Server returned invalid response format');
       }
 
       if (!res.ok) {
-        console.error('Registration failed with data:', data);
+        console.error('Registration failed:', data);
         throw new Error(data.message || `Registration failed with status ${res.status}`);
       }
 
-      console.log('Registration successful:', { user: data.user, hasToken: !!data.token });
+      console.log('✓ Registration successful:', {
+        hasToken: !!data.token,
+        userEmail: data.user?.email,
+        userIsAdmin: data.user?.isAdmin
+      });
 
       if (!data.token) {
         throw new Error('No token received from server');
       }
 
+      // Store token and user data
       localStorage.setItem('token', data.token);
       setUser(data.user);
+      
+      // Redirect based on user type
       handleRedirect(data.user);
+      
     } catch (err: any) {
-      console.error('Register error:', err);
+      console.error('Registration error:', err);
       throw new Error(err.message || 'Registration failed');
     }
   };
@@ -188,7 +212,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Logging out user');
     localStorage.removeItem('token');
     setUser(null);
-    navigate('/login'); // Redirect to login page instead of home
+    // Keep user on home page after logout instead of redirecting to login
+    navigate('/');
   };
 
   return (
