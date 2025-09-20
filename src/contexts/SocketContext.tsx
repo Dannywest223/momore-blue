@@ -18,7 +18,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const url = import.meta.env.VITE_SOCKET_URL as string;
     if (!url) return;
 
-    const newSocket = ioClient(url); // correct usage
+    const newSocket = ioClient(url); // default import
     setSocket(newSocket);
 
     return () => {

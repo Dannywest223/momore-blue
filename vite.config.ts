@@ -15,10 +15,13 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ["socket.io-client"], // <-- pre-bundle socket.io-client for dev
+  },
   build: {
     rollupOptions: {
-      // Explicitly mark socket.io-client as external to prevent build errors
-      external: ["socket.io-client"],
+      // Do NOT externalize socket.io-client; let Vite bundle it
+      // external: ["socket.io-client"], <-- remove this
     },
   },
 }));
