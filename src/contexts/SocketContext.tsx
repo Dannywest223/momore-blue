@@ -1,3 +1,4 @@
+// src/contexts/SocketContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import ioClient from "socket.io-client";
 
@@ -15,10 +16,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [socket, setSocket] = useState<SocketType | null>(null);
 
   useEffect(() => {
-    const url = import.meta.env.VITE_SOCKET_URL as string;
-    if (!url) return;
-
-    const newSocket = ioClient(url); // default import
+    const url = import.meta.env.VITE_SOCKET_URL ?? "http://localhost:4000"; 
+    const newSocket = ioClient(url);
     setSocket(newSocket);
 
     return () => {
