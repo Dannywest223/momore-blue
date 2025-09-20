@@ -134,13 +134,18 @@ const Wishlist = () => {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="relative overflow-hidden">
-                  <Link to={`/product/${product._id}`}>
-                    <img
-                      src={`http://localhost:5000${product.images[0]}`}
-                      alt={product.name}
-                      className="w-full h-64 object-cover transition-all duration-700 group-hover:scale-110"
-                    />
-                  </Link>
+                <Link to={`/product/${product._id}`}>
+  <img
+    src={`${import.meta.env.VITE_API_URL.replace('/api', '')}${product.images[0]}`}
+    alt={product.name}
+    className="w-full h-64 object-cover transition-all duration-700 group-hover:scale-110"
+    onError={(e) => {
+      const target = e.target as HTMLImageElement;
+      target.src = 'https://via.placeholder.com/300x300?text=No+Image';
+    }}
+  />
+</Link>
+
                   
                   {/* Overlay gradient */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

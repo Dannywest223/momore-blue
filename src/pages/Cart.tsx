@@ -161,11 +161,16 @@ const Cart = () => {
                     <div className="flex items-center space-x-6">
                       <Link to={`/product/${item.product._id}`} className="flex-shrink-0">
                         <div className="relative group">
-                          <img
-                            src={`http://localhost:5000${item.product.images[0]}`}
-                            alt={item.product.name}
-                            className="w-24 h-24 object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
-                          />
+                        <img
+  src={`${import.meta.env.VITE_API_URL.replace('/api', '')}${item.product.images[0]}`}
+  alt={item.product.name}
+  className="w-24 h-24 object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
+  onError={(e) => {
+    const target = e.target as HTMLImageElement;
+    target.src = 'https://via.placeholder.com/150x150?text=No+Image';
+  }}
+/>
+
                           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         </div>
                       </Link>
