@@ -12,6 +12,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const { login, register } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     name: "",
@@ -20,28 +21,49 @@ const Admin = () => {
     confirmPassword: "",
   });
   const { toast } = useToast();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
   
     try {
+      // Debug logging
+      console.log("=== LOGIN DEBUG INFO ===");
+      console.log("API Base URL:", import.meta.env.VITE_API_URL);
+      console.log("Login data being sent:", {
+        email: loginData.email,
+        password: loginData.password ? '***' : 'EMPTY'
+      });
+      console.log("Email length:", loginData.email.length);
+      console.log("Password length:", loginData.password.length);
+      console.log("Email trimmed:", `'${loginData.email.trim()}'`);
+      console.log("========================");
+
       await login(loginData.email, loginData.password);
+      
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
-      setLoginData({ email: "", password: "" }); // Clear form
+      setLoginData({ email: "", password: "" });
     } catch (error: any) {
+      console.error("Login error in component:", error);
+      console.log("Error message:", error.message);
+      console.log("Error object:", error);
+      
       toast({
         title: "Login Failed",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (registerData.password !== registerData.confirmPassword) {
       toast({
         title: "Error",
@@ -50,22 +72,52 @@ const Admin = () => {
       });
       return;
     }
-    
-    register(registerData.name, registerData.email, registerData.password)
-      .then(() => {
-        toast({
-          title: "Registration Successful",
-          description: "Your account has been created!",
-        });
-        navigate('/');
-      })
-      .catch((error) => {
-        toast({
-          title: "Registration Failed",
-          description: error.message,
-          variant: "destructive",
-        });
+
+    if (registerData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
       });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      console.log("=== REGISTER DEBUG INFO ===");
+      console.log("Registration data:", {
+        name: registerData.name,
+        email: registerData.email,
+        password: registerData.password ? '***' : 'EMPTY'
+      });
+      console.log("===========================");
+
+      await register(registerData.name, registerData.email, registerData.password);
+      
+      toast({
+        title: "Registration Successful",
+        description: "Your account has been created!",
+      });
+      
+      // Clear form
+      setRegisterData({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+    } catch (error: any) {
+      console.error("Registration error in component:", error);
+      
+      toast({
+        title: "Registration Failed",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLoginInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,12 +130,35 @@ const Admin = () => {
     setRegisterData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Test connection function
+  const testConnection = async () => {
+    try {
+      console.log("Testing API connection...");
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/test`);
+      console.log("Test response status:", response.status);
+      console.log("Test response:", await response.text());
+    } catch (error) {
+      console.error("Connection test failed:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">MOMORE Admin</h1>
           <p className="text-white/80">Manage your premium e-commerce store</p>
+          
+          {/* Debug info - remove in production */}
+          <div className="mt-4 p-2 bg-black/20 rounded text-xs text-white/60">
+            <div>API URL: {import.meta.env.VITE_API_URL}</div>
+            <button 
+              onClick={testConnection}
+              className="mt-1 px-2 py-1 bg-white/10 rounded text-white/80 hover:bg-white/20"
+            >
+              Test Connection
+            </button>
+          </div>
         </div>
 
         <Card className="border-0 shadow-large">
@@ -114,6 +189,7 @@ const Admin = () => {
                       required
                       placeholder="admin@momore.com"
                       className="w-full"
+                      disabled={isLoading}
                     />
                   </div>
                   
@@ -131,6 +207,7 @@ const Admin = () => {
                         required
                         placeholder="Enter your password"
                         className="w-full pr-10"
+                        disabled={isLoading}
                       />
                       <Button
                         type="button"
@@ -138,6 +215,7 @@ const Admin = () => {
                         size="icon"
                         className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground"
                         onClick={() => setShowPassword(!showPassword)}
+                        disabled={isLoading}
                       >
                         {showPassword ? (
                           <EyeOff className="h-4 w-4" />
@@ -148,9 +226,13 @@ const Admin = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full btn-hero-primary">
+                  <Button 
+                    type="submit" 
+                    className="w-full btn-hero-primary"
+                    disabled={isLoading}
+                  >
                     <LogIn className="h-4 w-4 mr-2" />
-                    Sign In
+                    {isLoading ? "Signing In..." : "Sign In"}
                   </Button>
                 </form>
 
@@ -176,6 +258,7 @@ const Admin = () => {
                       required
                       placeholder="Your full name"
                       className="w-full"
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -192,6 +275,7 @@ const Admin = () => {
                       required
                       placeholder="admin@momore.com"
                       className="w-full"
+                      disabled={isLoading}
                     />
                   </div>
                   
@@ -206,8 +290,9 @@ const Admin = () => {
                       value={registerData.password}
                       onChange={handleRegisterInputChange}
                       required
-                      placeholder="Create a strong password"
+                      placeholder="Create a strong password (min 6 chars)"
                       className="w-full"
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -224,12 +309,17 @@ const Admin = () => {
                       required
                       placeholder="Confirm your password"
                       className="w-full"
+                      disabled={isLoading}
                     />
                   </div>
 
-                  <Button type="submit" className="w-full btn-hero-primary">
+                  <Button 
+                    type="submit" 
+                    className="w-full btn-hero-primary"
+                    disabled={isLoading}
+                  >
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Create Account
+                    {isLoading ? "Creating Account..." : "Create Account"}
                   </Button>
                 </form>
               </TabsContent>
