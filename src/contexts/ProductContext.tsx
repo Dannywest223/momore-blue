@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 interface Product {
   _id: string;
@@ -34,7 +35,8 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/products');
+      const response = await fetch(`${API_BASE_URL}/products`);
+
       const data = await response.json();
       console.log('All products fetched:', data);
       setProducts(data.products || []);
@@ -50,7 +52,8 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Fetching featured products...');
       // Use the correct endpoint from your router
-      const response = await fetch('http://localhost:5000/api/products/featured/list');
+      const response = await fetch(`${API_BASE_URL}/products/featured/list`);
+
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -68,7 +71,8 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
       // Fallback: try to get featured products from regular endpoint
       try {
         console.log('Trying fallback method for featured products...');
-        const response = await fetch('http://localhost:5000/api/products?featured=true');
+        const response = await fetch(`${API_BASE_URL}/products?featured=true`);
+
         const data = await response.json();
         console.log('Fallback featured products:', data);
         setFeaturedProducts(data.products || []);
@@ -85,7 +89,8 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/products?search=${encodeURIComponent(query)}`);
+      const response = await fetch(`${API_BASE_URL}/products?search=${encodeURIComponent(query)}`);
+
       const data = await response.json();
       setSearchResults(data.products || []);
     } catch (error) {
