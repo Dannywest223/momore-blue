@@ -39,7 +39,8 @@ const Admin = () => {
       console.log("Email trimmed:", `'${loginData.email.trim()}'`);
       console.log("========================");
 
-      await login(loginData.email, loginData.password);
+      await login(loginData.email.toLowerCase().trim(), loginData.password);
+
       
       toast({
         title: "Login Successful",
@@ -93,7 +94,11 @@ const Admin = () => {
       });
       console.log("===========================");
 
-      await register(registerData.name, registerData.email, registerData.password);
+      await register(
+        registerData.name.trim(),
+        registerData.email.toLowerCase().trim(),
+        registerData.password
+      );
       
       toast({
         title: "Registration Successful",
