@@ -336,46 +336,47 @@ const AdminDashboard = () => {
               <p>No products found. Add your first product!</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {products.map((product) => (
-                  <Card key={product._id} className="border">
-                    <div className="relative">
-                      <img
-                        src={`http://localhost:5000${product.images[0]}`}
-                        alt={product.name}
-                        className="w-full h-48 object-cover rounded-t-lg"
-                      />
-                      {product.featured && (
-                        <span className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded">
-                          Featured
-                        </span>
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                      <p className="text-gray-600 text-sm mb-2">{product.category}</p>
-                      <p className="text-primary font-bold text-xl mb-2">${product.price}</p>
-                      <p className="text-sm text-gray-500 mb-4">Stock: {product.stockQuantity}</p>
-                      
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(product)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(product._id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+  {products.map((product) => (
+    <Card key={product._id} className="border">
+      <div className="relative">
+        <img
+          src={
+            product.images && product.images.length > 0
+              ? `${import.meta.env.VITE_API_URL}${product.images[0]}`
+              : 'https://via.placeholder.com/400x300?text=No+Image'
+          }
+          alt={product.name}
+          className="w-full h-48 object-cover rounded-t-lg"
+          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+            const target = e.target as HTMLImageElement;
+            target.src = 'https://via.placeholder.com/400x300?text=Image+Error';
+          }}
+        />
+        {product.featured && (
+          <span className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded">
+            Featured
+          </span>
+        )}
+      </div>
+      <CardContent className="p-4">
+        <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+        <p className="text-gray-600 text-sm mb-2">{product.category}</p>
+        <p className="text-primary font-bold text-xl mb-2">${product.price}</p>
+        <p className="text-sm text-gray-500 mb-4">Stock: {product.stockQuantity}</p>
+
+        <div className="flex space-x-2">
+          <Button size="sm" variant="outline" onClick={() => handleEdit(product)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => handleDelete(product._id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
+
             )}
           </CardContent>
         </Card>
