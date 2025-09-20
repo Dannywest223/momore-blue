@@ -33,15 +33,15 @@ const Header = () => {
 
   return (
     <>
-      {/* Top Banner */}
-      <div className="bg-primary text-primary-foreground text-center py-2 text-sm">
+      {/* Top Banner - Fixed Position */}
+      <div className="fixed top-0 left-0 right-0 bg-primary text-primary-foreground text-center py-2 text-sm z-[10000]">
         <div className="container mx-auto px-4">
           Free shipping on orders over $50 | Contact: info@momore.com | +250 788 123 456
         </div>
       </div>
 
       {/* Main Header - Enhanced Fixed Position */}
-      <header className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-md border-b shadow-lg z-[9999] supports-[backdrop-filter]:bg-background/60">
+      <header className="fixed top-[36px] left-0 right-0 bg-background/95 backdrop-blur-md border-b shadow-lg z-[9999] supports-[backdrop-filter]:bg-background/60">
         <nav className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Enhanced Logo */}
@@ -263,8 +263,8 @@ const Header = () => {
         </nav>
       </header>
 
-      {/* Spacer to prevent content from hiding behind fixed header */}
-      <div className="h-[104px]"></div>
+      {/* Spacer to prevent content from hiding behind fixed header and banner */}
+      <div className="h-[140px]"></div>
 
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
