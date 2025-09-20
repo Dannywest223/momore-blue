@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 interface User {
@@ -32,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUser = async (token: string) => {
     try {
-      const res = await await fetch(`${API_BASE_URL}/auth/me`, {
+      const res = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -60,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       email = email.trim();
       password = password.trim();
-      console.log('Login payload:', { email, password }); // DEBUG
+      console.log('Login payload:', { email, password });
 
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
@@ -69,8 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || 'Login failed');
+        const error = await res.json().catch(() => ({ message: 'Login failed' }));
+        throw new Error(error.message);
       }
 
       const data = await res.json();
@@ -88,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       name = name.trim();
       email = email.trim();
       password = password.trim();
-      console.log('Register payload:', { name, email, password }); // DEBUG
+      console.log('Register payload:', { name, email, password });
 
       const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
@@ -97,8 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || 'Registration failed');
+        const error = await res.json().catch(() => ({ message: 'Registration failed' }));
+        throw new Error(error.message);
       }
 
       const data = await res.json();
