@@ -20,26 +20,25 @@ const Admin = () => {
     confirmPassword: "",
   });
   const { toast } = useToast();
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    login(loginData.email, loginData.password)
-      .then(() => {
-        toast({
-          title: "Login Successful",
-          description: "Welcome back!",
-        });
-        navigate('/');
-      })
-      .catch((error) => {
-        toast({
-          title: "Login Failed",
-          description: error.message,
-          variant: "destructive",
-        });
+  
+    try {
+      await login(loginData.email, loginData.password);
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
       });
+      setLoginData({ email: "", password: "" }); // Clear form
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
+  
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();

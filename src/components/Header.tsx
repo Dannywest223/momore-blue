@@ -3,6 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Search, Heart, ShoppingBag, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
+import SearchModal from "./SearchModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,8 +16,11 @@ import logoImage from "../assets/logo.jpg";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { state: cartState } = useCart();
+  const { items: wishlistItems } = useWishlist();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -35,22 +41,36 @@ const Header = () => {
       </div>
 
       {/* Main Header */}
-      <header className="bg-background border-b shadow-soft sticky top-0 z-50">
+      <header className="bg-background border-b shadow-soft sticky top-0 z-50 backdrop-blur-sm bg-background/95">
         <nav className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo */}
+            {/* Enhanced Logo */}
             <Link 
-  to="/" 
-  className="flex items-center hover:opacity-80 transition-opacity duration-200"
->
-  <div className="h-12 w-12 md:h-14 md:w-14 flex items-center justify-center overflow-hidden rounded-full border border-primary/70 shadow-sm">
-    <img
-      src={logoImage}
-      alt="MOMORE Logo"
-      className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-    />
-  </div>
-</Link>
+              to="/" 
+              className="flex items-center group transition-all duration-300 hover:scale-105"
+            >
+              <div className="relative">
+                {/* Logo Container with Classic Elegant Styling - Larger but Compact */}
+                <div className="h-16 w-16 md:h-18 md:w-18 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-white via-gray-50 to-white border-2 border-primary/30 shadow-elegant hover:shadow-glow transition-all duration-500 group-hover:border-primary/60 group-hover:scale-110 backdrop-blur-sm">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-primary/8 via-transparent to-primary-glow/15 opacity-60"></div>
+                  <img
+                    src={logoImage}
+                    alt="MOMORE - Premium Fashion"
+                    className="relative z-10 w-full h-full object-contain p-1.5 filter brightness-110 contrast-120 saturate-120 group-hover:scale-110 transition-all duration-500 drop-shadow-md"
+                  />
+                </div>
+                {/* Premium Shine Effect */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                {/* Subtle Glow Ring */}
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-primary opacity-0 group-hover:opacity-30 blur-lg transition-opacity duration-500 pointer-events-none"></div>
+              </div>
+              {/* Brand Text - Enhanced Typography */}
+              <div className="ml-3 hidden sm:block group-hover:scale-105 transition-transform duration-300">
+                <h1 className="text-xl md:text-2xl font-bold text-primary tracking-tight leading-none bg-gradient-primary bg-clip-text text-transparent">
+                  MOMORE
+                </h1>
+              </div>
+            </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
@@ -58,49 +78,77 @@ const Header = () => {
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`font-medium transition-colors hover:text-primary ${
+                  className={`font-medium transition-all duration-200 hover:text-primary hover:scale-105 relative ${
                     isActive(link.path) ? "text-primary" : "text-foreground"
                   }`}
                 >
                   {link.name}
+                  {isActive(link.path) && (
+                    <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-primary rounded-full"></div>
+                  )}
                 </Link>
               ))}
             </div>
 
             {/* Desktop Icons */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110"
+                onClick={() => setIsSearchOpen(true)}
+              >
                 <Search className="h-5 w-5" />
               </Button>
+              
+              {/* Optimized Wishlist Button with Real-time Count */}
               <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-foreground hover:text-primary"
-                asChild
-              >
-                <Link to="/wishlist">
-                <Heart className="h-5 w-5" />
-                </Link>
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-foreground hover:text-primary"
-                asChild
-              >
-                <Link to="/cart">
-                <ShoppingBag className="h-5 w-5" />
-                </Link>
-              </Button>
+  variant="ghost" 
+  size="icon" 
+  className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110 relative"
+  asChild
+>
+  <Link to="/wishlist">
+    <Heart className="h-5 w-5" />
+    {wishlistItems && wishlistItems.length > 0 && (
+      <span 
+        className="absolute -top-1 -right-1 bg-gradient-primary text-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-glow animate-pulse font-semibold min-w-[20px]"
+        key={`wishlist-${wishlistItems.length}`}
+      >
+        {wishlistItems.length > 99 ? '99+' : wishlistItems.length}
+      </span>
+    )}
+  </Link>
+</Button>
+
+<Button 
+  variant="ghost" 
+  size="icon" 
+  className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110 relative"
+  asChild
+>
+  <Link to="/cart">
+    <ShoppingBag className="h-5 w-5" />
+    {cartState && cartState.itemCount > 0 && (
+      <span 
+        className="absolute -top-1 -right-1 bg-gradient-primary text-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-glow animate-pulse font-semibold min-w-[20px]"
+        key={`cart-${cartState.itemCount}`}
+      >
+        {cartState.itemCount > 99 ? '99+' : cartState.itemCount}
+      </span>
+    )}
+  </Link>
+</Button>
+
               
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
+                    <Button variant="ghost" size="icon" className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110">
                       <User className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="border-primary/20 shadow-elegant">
                     <DropdownMenuItem className="font-medium">
                       {user.name}
                     </DropdownMenuItem>
@@ -116,7 +164,7 @@ const Header = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button variant="ghost" asChild>
+                <Button variant="ghost" className="hover:bg-primary/10" asChild>
                   <Link to="/admin">Login</Link>
                 </Button>
               )}
@@ -126,7 +174,7 @@ const Header = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="md:hidden hover:bg-primary/10 transition-all duration-200"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -135,7 +183,7 @@ const Header = () => {
 
           {/* Mobile Navigation */}
           {isMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t animate-fade-in">
+            <div className="md:hidden mt-4 pb-4 border-t border-primary/20 animate-in slide-in-from-top-2 duration-300">
               <div className="flex flex-col space-y-4 pt-4">
                 {navigationLinks.map((link) => (
                   <Link
@@ -150,29 +198,63 @@ const Header = () => {
                   </Link>
                 ))}
                 <div className="flex items-center space-x-4 pt-4">
-                  <Button variant="ghost" size="icon" className="text-foreground hover:text-primary" asChild>
-                    <Link to="/wishlist">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-foreground hover:text-primary hover:bg-primary/10"
+                    onClick={() => setIsSearchOpen(true)}
+                  >
                     <Search className="h-5 w-5" />
+                  </Button>
+                  
+                  {/* Mobile Wishlist with Count */}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-foreground hover:text-primary hover:bg-primary/10 relative" 
+                    asChild
+                  >
+                    <Link to="/wishlist" onClick={() => setIsMenuOpen(false)}>
+                      <Heart className="h-5 w-5" />
+                      {wishlistItems && wishlistItems.length > 0 && (
+                        <span 
+                          className="absolute -top-1 -right-1 bg-gradient-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold"
+                          key={`mobile-wishlist-${wishlistItems.length}`}
+                        >
+                          {wishlistItems.length > 99 ? '99+' : wishlistItems.length}
+                        </span>
+                      )}
                     </Link>
                   </Button>
-                  <Button variant="ghost" size="icon" className="text-foreground hover:text-primary" asChild>
-                    <Link to="/wishlist">
-                    <Heart className="h-5 w-5" />
+                  
+                  {/* Mobile Cart with Count */}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-foreground hover:text-primary hover:bg-primary/10 relative" 
+                    asChild
+                  >
+                    <Link to="/cart" onClick={() => setIsMenuOpen(false)}>
+                      <ShoppingBag className="h-5 w-5" />
+                      {cartState && cartState.itemCount > 0 && (
+                        <span 
+                          className="absolute -top-1 -right-1 bg-gradient-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold"
+                          key={`mobile-cart-${cartState.itemCount}`}
+                        >
+                          {cartState.itemCount > 99 ? '99+' : cartState.itemCount}
+                        </span>
+                      )}
                     </Link>
                   </Button>
-                  <Button variant="ghost" size="icon" className="text-foreground hover:text-primary" asChild>
-                    <Link to="/cart">
-                    <ShoppingBag className="h-5 w-5" />
-                    </Link>
-                  </Button>
+                  
                   {user ? (
-                    <Button variant="ghost" onClick={logout}>
+                    <Button variant="ghost" onClick={logout} className="hover:bg-primary/10">
                       <LogOut className="h-4 w-4 mr-2" />
                       Logout
                     </Button>
                   ) : (
-                    <Button variant="ghost" asChild>
-                      <Link to="/admin">Login</Link>
+                    <Button variant="ghost" className="hover:bg-primary/10" asChild>
+                      <Link to="/admin" onClick={() => setIsMenuOpen(false)}>Login</Link>
                     </Button>
                   )}
                 </div>
@@ -181,6 +263,8 @@ const Header = () => {
           )}
         </nav>
       </header>
+
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 };

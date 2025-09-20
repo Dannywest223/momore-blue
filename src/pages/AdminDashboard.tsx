@@ -1,53 +1,33 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Eye, Upload, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useAuth } from "@/contexts/AuthContext";
-import { useSocket } from "@/contexts/SocketContext";
-import { productsAPI } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-
-const categories = ["Clothing", "Bags & Accessories", "Homeware", "Art & Decor", "Beauty Products", "Jewelry"];
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Package, Edit, Trash2, Upload } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const { socket } = useSocket();
+  const navigate = useNavigate();
   const { toast } = useToast();
-  
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    price: "",
-    category: "",
+    name: '',
+    description: '',
+    price: '',
+    category: '',
     featured: false,
-    stockQuantity: "",
+    stockQuantity: '',
+    images: []
   });
-  const [selectedFiles, setSelectedFiles] = useState([]);
 
   useEffect(() => {
     if (!user || !user.isAdmin) {
@@ -57,34 +37,11 @@ const AdminDashboard = () => {
     fetchProducts();
   }, [user, navigate]);
 
-  useEffect(() => {
-    if (socket) {
-      socket.on('productAdded', (product) => {
-        setProducts(prev => [product, ...prev]);
-      });
-
-      socket.on('productUpdated', (product) => {
-        setProducts(prev => 
-          prev.map(p => p._id === product._id ? product : p)
-        );
-      });
-
-      socket.on('productDeleted', (productId) => {
-        setProducts(prev => prev.filter(p => p._id !== productId));
-      });
-
-      return () => {
-        socket.off('productAdded');
-        socket.off('productUpdated');
-        socket.off('productDeleted');
-      };
-    }
-  }, [socket]);
-
   const fetchProducts = async () => {
     try {
-      const response = await productsAPI.getAll();
-      setProducts(response.data.products);
+      const response = await fetch('http://localhost:5000/api/products');
+      const data = await response.json();
+      setProducts(data.products || []);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -100,92 +57,118 @@ const AdminDashboard = () => {
     }));
   };
 
-  const handleFileChange = (e) => {
-    setSelectedFiles(Array.from(e.target.files));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      description: "",
-      price: "",
-      category: "",
-      featured: false,
-      stockQuantity: "",
-    });
-    setSelectedFiles([]);
-    setEditingProduct(null);
+  const handleImageChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      images: Array.from(e.target.files)
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const token = localStorage.getItem('token');
     
     const formDataToSend = new FormData();
     formDataToSend.append('name', formData.name);
     formDataToSend.append('description', formData.description);
     formDataToSend.append('price', formData.price);
     formDataToSend.append('category', formData.category);
-    formDataToSend.append('featured', formData.featured);
-    formDataToSend.append('stockQuantity', formData.stockQuantity);
+    formDataToSend.append('featured', formData.featured.toString());
 
-    selectedFiles.forEach(file => {
-      formDataToSend.append('images', file);
+    formDataToSend.append('stockQuantity', formData.stockQuantity);
+    
+    formData.images.forEach((image) => {
+      formDataToSend.append('images', image);
     });
 
     try {
-      if (editingProduct) {
-        await productsAPI.update(editingProduct._id, formDataToSend);
-        toast({
-          title: "Product Updated",
-          description: "Product updated successfully",
-        });
-      } else {
-        await productsAPI.create(formDataToSend);
-        toast({
-          title: "Product Created",
-          description: "Product created successfully",
-        });
-      }
+      const url = editingProduct
+        ? `http://localhost:5000/api/products/${editingProduct._id}`
+        : 'http://localhost:5000/api/products';
       
-      setIsDialogOpen(false);
-      resetForm();
+      const method = editingProduct ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formDataToSend,
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: `Product ${editingProduct ? 'updated' : 'created'} successfully`,
+        });
+        
+        setFormData({
+          name: '',
+          description: '',
+          price: '',
+          category: '',
+          featured: false,
+          stockQuantity: '',
+          images: []
+        });
+        
+        setShowAddForm(false);
+        setEditingProduct(null);
+        fetchProducts();
+      } else {
+        throw new Error('Failed to save product');
+      }
     } catch (error) {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to save product",
+        description: error.message,
         variant: "destructive",
       });
     }
   };
 
   const handleEdit = (product) => {
-    setEditingProduct(product);
     setFormData({
       name: product.name,
       description: product.description,
-      price: product.price.toString(),
+      price: product.price,
       category: product.category,
       featured: product.featured,
-      stockQuantity: product.stockQuantity.toString(),
+      stockQuantity: product.stockQuantity,
+      images: []
     });
-    setIsDialogOpen(true);
+    setEditingProduct(product);
+    setShowAddForm(true);
   };
 
   const handleDelete = async (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await productsAPI.delete(productId);
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    const token = localStorage.getItem('token');
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
         toast({
-          title: "Product Deleted",
+          title: "Success",
           description: "Product deleted successfully",
         });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to delete product",
-          variant: "destructive",
-        });
+        fetchProducts();
+      } else {
+        throw new Error('Failed to delete product');
       }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -194,53 +177,54 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12">
+    <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage your products</p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="btn-hero-primary" onClick={resetForm}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingProduct ? 'Edit Product' : 'Add New Product'}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Product Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={4}
-                    required
-                  />
-                </div>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <Button
+            onClick={() => {
+              setShowAddForm(true);
+              setEditingProduct(null);
+              setFormData({
+                name: '',
+                description: '',
+                price: '',
+                category: '',
+                featured: false,
+                stockQuantity: '',
+                images: []
+              });
+            }}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        </div>
 
-                <div className="grid grid-cols-2 gap-4">
+        {showAddForm && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>
+                {editingProduct ? 'Edit Product' : 'Add New Product'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="price">Price ($)</Label>
+                    <Label htmlFor="name">Product Name</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="price">Price</Label>
                     <Input
                       id="price"
                       name="price"
@@ -251,6 +235,18 @@ const AdminDashboard = () => {
                       required
                     />
                   </div>
+                  
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <Input
+                      id="category"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  
                   <div>
                     <Label htmlFor="stockQuantity">Stock Quantity</Label>
                     <Input
@@ -265,28 +261,15 @@ const AdminDashboard = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="featured"
-                    checked={formData.featured}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, featured: checked }))}
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    rows={4}
+                    required
                   />
-                  <Label htmlFor="featured">Featured Product</Label>
                 </div>
 
                 <div>
@@ -296,100 +279,101 @@ const AdminDashboard = () => {
                     type="file"
                     multiple
                     accept="image/*"
-                    onChange={handleFileChange}
-                    className="cursor-pointer"
+                    onChange={handleImageChange}
+                    required={!editingProduct}
                   />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Select multiple images (max 5)
-                  </p>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="btn-hero-primary">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="featured"
+                    name="featured"
+                    checked={formData.featured}
+                    onCheckedChange={(checked) => 
+                      setFormData(prev => ({ ...prev, featured: checked }))
+                    }
+                  />
+                  <Label htmlFor="featured">Featured Product</Label>
+                </div>
+
+                <div className="flex space-x-4">
+                  <Button type="submit" className="bg-primary hover:bg-primary/90">
+                    <Upload className="h-4 w-4 mr-2" />
                     {editingProduct ? 'Update Product' : 'Create Product'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setEditingProduct(null);
+                    }}
+                  >
+                    Cancel
                   </Button>
                 </div>
               </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {loading ? (
-          <div className="text-center py-16">
-            <p className="text-xl text-muted-foreground">Loading products...</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <Card key={product._id} className="border-0 shadow-medium">
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{product.name}</CardTitle>
-                      <div className="flex items-center space-x-2 mt-2">
-                        <Badge variant="secondary">{product.category}</Badge>
-                        {product.featured && (
-                          <Badge variant="default">Featured</Badge>
-                        )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Package className="h-5 w-5 mr-2" />
+              Products ({products.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <p>Loading products...</p>
+            ) : products.length === 0 ? (
+              <p>No products found. Add your first product!</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {products.map((product) => (
+                  <Card key={product._id} className="border">
+                    <div className="relative">
+                      <img
+                        src={`http://localhost:5000${product.images[0]}`}
+                        alt={product.name}
+                        className="w-full h-48 object-cover rounded-t-lg"
+                      />
+                      {product.featured && (
+                        <span className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                      <p className="text-gray-600 text-sm mb-2">{product.category}</p>
+                      <p className="text-primary font-bold text-xl mb-2">${product.price}</p>
+                      <p className="text-sm text-gray-500 mb-4">Stock: {product.stockQuantity}</p>
+                      
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(product)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(product._id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </div>
-                    <div className="flex space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(product)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(product._id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="aspect-square mb-4 overflow-hidden rounded-lg">
-                    <img
-                      src={`http://localhost:5000${product.images[0]}`}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                    {product.description}
-                  </p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold text-primary">
-                      ${product.price}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      Stock: {product.stockQuantity}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {!loading && products.length === 0 && (
-          <div className="text-center py-16">
-            <h2 className="text-2xl font-bold text-foreground mb-4">No products yet</h2>
-            <p className="text-muted-foreground mb-6">Start by adding your first product</p>
-            <Button className="btn-hero-primary" onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
-            </Button>
-          </div>
-        )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

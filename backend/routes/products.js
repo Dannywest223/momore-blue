@@ -37,12 +37,29 @@ const upload = multer({
   }
 });
 
-// Get all products
+// Get featured products - MOVED BEFORE the /:id route to avoid conflicts
+router.get('/featured/list', async (req, res) => {
+  try {
+    console.log('Fetching featured products...');
+    const products = await Product.find({ featured: true })
+      .sort({ createdAt: -1 })
+      .limit(12); // Increased limit to show more products
+    
+    console.log(`Found ${products.length} featured products`);
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching featured products:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get all products with filtering
 router.get('/', async (req, res) => {
   try {
     const { category, featured, search, page = 1, limit = 12 } = req.query;
     const query = {};
 
+    // Apply filters
     if (category && category !== 'All Categories') {
       query.category = category;
     }
@@ -54,9 +71,12 @@ router.get('/', async (req, res) => {
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
+        { description: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } }
       ];
     }
+
+    console.log('Product query:', query);
 
     const products = await Product.find(query)
       .sort({ createdAt: -1 })
@@ -65,15 +85,17 @@ router.get('/', async (req, res) => {
 
     const total = await Product.countDocuments(query);
 
+    console.log(`Found ${products.length} products out of ${total} total`);
+
     res.json({
       products,
       totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      currentPage: parseInt(page),
       total
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error fetching products:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -86,7 +108,10 @@ router.get('/:id', async (req, res) => {
     }
     res.json(product);
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching product:', error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid product ID' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -95,6 +120,11 @@ router.get('/:id', async (req, res) => {
 router.post('/', adminAuth, upload.array('images', 5), async (req, res) => {
   try {
     const { name, description, price, category, featured, stockQuantity } = req.body;
+
+    // Validation
+    if (!name || !description || !price || !category) {
+      return res.status(400).json({ message: 'Name, description, price, and category are required' });
+    }
 
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: 'At least one image is required' });
@@ -108,20 +138,24 @@ router.post('/', adminAuth, upload.array('images', 5), async (req, res) => {
       price: parseFloat(price),
       category,
       images,
-      featured: featured === 'true',
+      featured: featured === 'true' || featured === true,
       stockQuantity: parseInt(stockQuantity) || 0,
       inStock: parseInt(stockQuantity) > 0
     });
 
     await product.save();
 
+    console.log('New product created:', product);
+
     // Emit real-time update
-    req.io.emit('productAdded', product);
+    if (req.io) {
+      req.io.emit('productAdded', product);
+    }
 
     res.status(201).json(product);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error creating product:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -136,13 +170,15 @@ router.put('/:id', adminAuth, upload.array('images', 5), async (req, res) => {
     }
 
     // Update fields
-    product.name = name || product.name;
-    product.description = description || product.description;
-    product.price = price ? parseFloat(price) : product.price;
-    product.category = category || product.category;
-    product.featured = featured !== undefined ? featured === 'true' : product.featured;
-    product.stockQuantity = stockQuantity ? parseInt(stockQuantity) : product.stockQuantity;
-    product.inStock = product.stockQuantity > 0;
+    if (name) product.name = name;
+    if (description) product.description = description;
+    if (price) product.price = parseFloat(price);
+    if (category) product.category = category;
+    if (featured !== undefined) product.featured = featured === 'true' || featured === true;
+    if (stockQuantity !== undefined) {
+      product.stockQuantity = parseInt(stockQuantity);
+      product.inStock = product.stockQuantity > 0;
+    }
 
     // Handle new images
     if (req.files && req.files.length > 0) {
@@ -152,12 +188,19 @@ router.put('/:id', adminAuth, upload.array('images', 5), async (req, res) => {
 
     await product.save();
 
+    console.log('Product updated:', product);
+
     // Emit real-time update
-    req.io.emit('productUpdated', product);
+    if (req.io) {
+      req.io.emit('productUpdated', product);
+    }
 
     res.json(product);
   } catch (error) {
-    console.error(error);
+    console.error('Error updating product:', error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid product ID' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -180,23 +223,94 @@ router.delete('/:id', adminAuth, async (req, res) => {
 
     await Product.findByIdAndDelete(req.params.id);
 
+    console.log('Product deleted:', req.params.id);
+
     // Emit real-time update
-    req.io.emit('productDeleted', req.params.id);
+    if (req.io) {
+      req.io.emit('productDeleted', req.params.id);
+    }
 
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
-    console.error(error);
+    console.error('Error deleting product:', error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid product ID' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Get featured products
-router.get('/featured/list', async (req, res) => {
+// Bulk update featured status (Admin only)
+router.patch('/bulk/featured', adminAuth, async (req, res) => {
   try {
-    const products = await Product.find({ featured: true }).limit(6);
-    res.json(products);
+    const { productIds, featured } = req.body;
+
+    if (!Array.isArray(productIds)) {
+      return res.status(400).json({ message: 'productIds must be an array' });
+    }
+
+    const result = await Product.updateMany(
+      { _id: { $in: productIds } },
+      { featured: featured === true }
+    );
+
+    console.log(`Updated featured status for ${result.modifiedCount} products`);
+
+    // Emit real-time update for bulk changes
+    if (req.io) {
+      req.io.emit('productsBulkUpdated', { productIds, featured });
+    }
+
+    res.json({ 
+      message: `Updated featured status for ${result.modifiedCount} products`,
+      modifiedCount: result.modifiedCount 
+    });
   } catch (error) {
-    console.error(error);
+    console.error('Error bulk updating products:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get product categories
+router.get('/categories/list', async (req, res) => {
+  try {
+    const categories = await Product.distinct('category');
+    res.json(categories.filter(cat => cat)); // Filter out empty categories
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get product statistics (Admin only)
+router.get('/stats/overview', adminAuth, async (req, res) => {
+  try {
+    const totalProducts = await Product.countDocuments();
+    const featuredProducts = await Product.countDocuments({ featured: true });
+    const inStockProducts = await Product.countDocuments({ inStock: true });
+    const outOfStockProducts = await Product.countDocuments({ inStock: false });
+
+    const categoryStats = await Product.aggregate([
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 },
+          avgPrice: { $avg: '$price' },
+          totalStock: { $sum: '$stockQuantity' }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);
+
+    res.json({
+      totalProducts,
+      featuredProducts,
+      inStockProducts,
+      outOfStockProducts,
+      categoryStats
+    });
+  } catch (error) {
+    console.error('Error fetching product statistics:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
