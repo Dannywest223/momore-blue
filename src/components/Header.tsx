@@ -40,8 +40,8 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Main Header */}
-      <header className="bg-background border-b shadow-soft sticky top-0 z-50 backdrop-blur-sm bg-background/95">
+      {/* Main Header - Enhanced Fixed Position */}
+      <header className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-md border-b shadow-lg z-[9999] supports-[backdrop-filter]:bg-background/60">
         <nav className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Enhanced Logo */}
@@ -103,44 +103,43 @@ const Header = () => {
               
               {/* Optimized Wishlist Button with Real-time Count */}
               <Button 
-  variant="ghost" 
-  size="icon" 
-  className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110 relative"
-  asChild
->
-  <Link to="/wishlist">
-    <Heart className="h-5 w-5" />
-    {wishlistItems && wishlistItems.length > 0 && (
-      <span 
-        className="absolute -top-1 -right-1 bg-gradient-primary text-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-glow animate-pulse font-semibold min-w-[20px]"
-        key={`wishlist-${wishlistItems.length}`}
-      >
-        {wishlistItems.length > 99 ? '99+' : wishlistItems.length}
-      </span>
-    )}
-  </Link>
-</Button>
+                variant="ghost" 
+                size="icon" 
+                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110 relative"
+                asChild
+              >
+                <Link to="/wishlist">
+                  <Heart className="h-5 w-5" />
+                  {wishlistItems && wishlistItems.length > 0 && (
+                    <span 
+                      className="absolute -top-1 -right-1 bg-gradient-primary text-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-glow animate-pulse font-semibold min-w-[20px]"
+                      key={`wishlist-${wishlistItems.length}`}
+                    >
+                      {wishlistItems.length > 99 ? '99+' : wishlistItems.length}
+                    </span>
+                  )}
+                </Link>
+              </Button>
 
-<Button 
-  variant="ghost" 
-  size="icon" 
-  className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110 relative"
-  asChild
->
-  <Link to="/cart">
-    <ShoppingBag className="h-5 w-5" />
-    {cartState && cartState.itemCount > 0 && (
-      <span 
-        className="absolute -top-1 -right-1 bg-gradient-primary text-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-glow animate-pulse font-semibold min-w-[20px]"
-        key={`cart-${cartState.itemCount}`}
-      >
-        {cartState.itemCount > 99 ? '99+' : cartState.itemCount}
-      </span>
-    )}
-  </Link>
-</Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110 relative"
+                asChild
+              >
+                <Link to="/cart">
+                  <ShoppingBag className="h-5 w-5" />
+                  {cartState && cartState.itemCount > 0 && (
+                    <span 
+                      className="absolute -top-1 -right-1 bg-gradient-primary text-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-glow animate-pulse font-semibold min-w-[20px]"
+                      key={`cart-${cartState.itemCount}`}
+                    >
+                      {cartState.itemCount > 99 ? '99+' : cartState.itemCount}
+                    </span>
+                  )}
+                </Link>
+              </Button>
 
-              
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -263,6 +262,9 @@ const Header = () => {
           )}
         </nav>
       </header>
+
+      {/* Spacer to prevent content from hiding behind fixed header */}
+      <div className="h-[104px]"></div>
 
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
