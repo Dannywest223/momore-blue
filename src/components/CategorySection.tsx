@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import clothingImg from "@/assets/99.jpg";
 import homewareImg from "@/assets/98.jpg";
+import { useNavigate } from "react-router-dom";
 
 const categories = [
   {
@@ -29,6 +30,7 @@ const categories = [
 ];
 
 const CategorySection = () => {
+  const navigate = useNavigate();
   return (
     <section className="py-20 bg-gradient-to-br from-background via-background/95 to-muted/20 overflow-hidden relative">
       {/* Background Pattern */}
@@ -116,13 +118,14 @@ const CategorySection = () => {
           <p className="text-muted-foreground mb-6 text-lg">
             Can't find what you're looking for?
           </p>
-          <Button 
-            variant="outline" 
-            size="lg"
-            className="border-primary/30 text-primary hover:bg-primary hover:text-white transition-all duration-300 px-8 py-3 font-semibold hover:scale-105 hover:shadow-lg"
-          >
-            View All Products
-          </Button>
+          <Button
+          variant="outline"
+          size="lg"
+          className="border-primary/30 text-primary hover:bg-primary hover:text-white transition-all duration-300 px-8 py-3 font-semibold hover:scale-105 hover:shadow-lg"
+          onClick={() => navigate("/shop")} // <-- now works correctly
+        >
+          View All Products
+        </Button>
         </div>
       </div>
 
