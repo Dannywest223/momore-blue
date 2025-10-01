@@ -27,21 +27,16 @@ const Admin = () => {
     setIsLoading(true);
   
     try {
-      // Debug logging
       console.log("=== LOGIN DEBUG INFO ===");
       console.log("API Base URL:", import.meta.env.VITE_API_URL);
       console.log("Login data being sent:", {
         email: loginData.email,
         password: loginData.password ? '***' : 'EMPTY'
       });
-      console.log("Email length:", loginData.email.length);
-      console.log("Password length:", loginData.password.length);
-      console.log("Email trimmed:", `'${loginData.email.trim()}'`);
       console.log("========================");
 
       await login(loginData.email.toLowerCase().trim(), loginData.password);
 
-      
       toast({
         title: "Login Successful",
         description: "Welcome back!",
@@ -49,8 +44,6 @@ const Admin = () => {
       setLoginData({ email: "", password: "" });
     } catch (error: any) {
       console.error("Login error in component:", error);
-      console.log("Error message:", error.message);
-      console.log("Error object:", error);
       
       toast({
         title: "Login Failed",
@@ -86,14 +79,6 @@ const Admin = () => {
     setIsLoading(true);
     
     try {
-      console.log("=== REGISTER DEBUG INFO ===");
-      console.log("Registration data:", {
-        name: registerData.name,
-        email: registerData.email,
-        password: registerData.password ? '***' : 'EMPTY'
-      });
-      console.log("===========================");
-
       await register(
         registerData.name.trim(),
         registerData.email.toLowerCase().trim(),
@@ -105,7 +90,6 @@ const Admin = () => {
         description: "Your account has been created!",
       });
       
-      // Clear form
       setRegisterData({
         name: "",
         email: "",
@@ -135,7 +119,6 @@ const Admin = () => {
     setRegisterData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Test connection function
   const testConnection = async () => {
     try {
       console.log("Testing API connection...");
@@ -148,41 +131,83 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">MOMORE Admin</h1>
-          <p className="text-white/80">Manage your premium e-commerce store</p>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50/30 flex items-center justify-center py-12 px-4 relative overflow-hidden">
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        
+        .animate-fade-in {
+          animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        .golden-line {
+          background: linear-gradient(90deg, transparent, #d97706, #b45309, #d97706, transparent);
+          background-size: 200% 100%;
+          animation: shimmer 3s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* Background Decoration */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-amber-400 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-600 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
+        {/* Header */}
+        <div className="text-center mb-8 animate-fade-in">
+        <div className="inline-block mb-4 mt-12">
+  <span className="text-sm font-bold text-amber-700 uppercase tracking-widest bg-amber-100 px-6 py-2.5 rounded-full border-2 border-amber-200">
+    Admin Portal
+  </span>
+</div>
+
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-amber-900 via-amber-700 to-amber-900 bg-clip-text text-transparent mb-3">
+            MOMORE
+          </h1>
+          <p className="text-stone-600 text-lg">Manage your premium store</p>
+          <div className="w-24 h-1 golden-line mx-auto mt-4 rounded-full"></div>
           
-          {/* Debug info - remove in production */}
-          <div className="mt-4 p-2 bg-black/20 rounded text-xs text-white/60">
-            <div>API URL: {import.meta.env.VITE_API_URL}</div>
-            <button 
-              onClick={testConnection}
-              className="mt-1 px-2 py-1 bg-white/10 rounded text-white/80 hover:bg-white/20"
-            >
-              Test Connection
-            </button>
-          </div>
+          {/* Debug info */}
+          
         </div>
 
-        <Card className="border-0 shadow-large">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl text-foreground">
+        {/* Main Card */}
+        <Card className="border-0 shadow-2xl rounded-2xl overflow-hidden animate-fade-in bg-white" style={{ animationDelay: '0.2s' }}>
+          <CardHeader className="bg-gradient-to-r from-amber-700 to-amber-800 text-white pb-8 pt-8">
+            <CardTitle className="text-center text-3xl font-bold">
               Admin Access
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-8">
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-amber-100 p-1 rounded-xl">
+                <TabsTrigger 
+                  value="login"
+                  className="data-[state=active]:bg-white data-[state=active]:text-amber-900 rounded-lg font-semibold"
+                >
+                  Login
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="register"
+                  className="data-[state=active]:bg-white data-[state=active]:text-amber-900 rounded-lg font-semibold"
+                >
+                  Register
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login" className="space-y-4 mt-6">
-                <form onSubmit={handleLogin} className="space-y-4">
+              {/* Login Form */}
+              <TabsContent value="login" className="space-y-6 mt-8">
+                <form onSubmit={handleLogin} className="space-y-6">
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                    <label htmlFor="email" className="block text-sm font-bold text-stone-700 mb-2">
                       Email Address
                     </label>
                     <Input
@@ -193,13 +218,13 @@ const Admin = () => {
                       onChange={handleLoginInputChange}
                       required
                       placeholder="admin@momore.com"
-                      className="w-full"
+                      className="w-full h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl"
                       disabled={isLoading}
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+                    <label htmlFor="password" className="block text-sm font-bold text-stone-700 mb-2">
                       Password
                     </label>
                     <div className="relative">
@@ -211,21 +236,21 @@ const Admin = () => {
                         onChange={handleLoginInputChange}
                         required
                         placeholder="Enter your password"
-                        className="w-full pr-10"
+                        className="w-full h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl pr-12"
                         disabled={isLoading}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground"
+                        className="absolute right-0 top-0 h-12 w-12 text-amber-700 hover:text-amber-900 hover:bg-transparent"
                         onClick={() => setShowPassword(!showPassword)}
                         disabled={isLoading}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-5 w-5" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-5 w-5" />
                         )}
                       </Button>
                     </div>
@@ -233,25 +258,26 @@ const Admin = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full btn-hero-primary"
+                    className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800 h-14 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 font-bold text-lg"
                     disabled={isLoading}
                   >
-                    <LogIn className="h-4 w-4 mr-2" />
+                    <LogIn className="h-5 w-5 mr-2" />
                     {isLoading ? "Signing In..." : "Sign In"}
                   </Button>
                 </form>
 
                 <div className="text-center">
-                  <Button variant="link" className="text-primary">
+                  <Button variant="link" className="text-amber-700 hover:text-amber-900 font-semibold">
                     Forgot your password?
                   </Button>
                 </div>
               </TabsContent>
 
-              <TabsContent value="register" className="space-y-4 mt-6">
-                <form onSubmit={handleRegister} className="space-y-4">
+              {/* Register Form */}
+              <TabsContent value="register" className="space-y-6 mt-8">
+                <form onSubmit={handleRegister} className="space-y-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+                    <label htmlFor="name" className="block text-sm font-bold text-stone-700 mb-2">
                       Full Name
                     </label>
                     <Input
@@ -262,13 +288,13 @@ const Admin = () => {
                       onChange={handleRegisterInputChange}
                       required
                       placeholder="Your full name"
-                      className="w-full"
+                      className="w-full h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl"
                       disabled={isLoading}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="register-email" className="block text-sm font-medium text-foreground mb-2">
+                    <label htmlFor="register-email" className="block text-sm font-bold text-stone-700 mb-2">
                       Email Address
                     </label>
                     <Input
@@ -279,13 +305,13 @@ const Admin = () => {
                       onChange={handleRegisterInputChange}
                       required
                       placeholder="admin@momore.com"
-                      className="w-full"
+                      className="w-full h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl"
                       disabled={isLoading}
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="register-password" className="block text-sm font-medium text-foreground mb-2">
+                    <label htmlFor="register-password" className="block text-sm font-bold text-stone-700 mb-2">
                       Password
                     </label>
                     <Input
@@ -296,13 +322,13 @@ const Admin = () => {
                       onChange={handleRegisterInputChange}
                       required
                       placeholder="Create a strong password (min 6 chars)"
-                      className="w-full"
+                      className="w-full h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl"
                       disabled={isLoading}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="confirm-password" className="block text-sm font-medium text-foreground mb-2">
+                    <label htmlFor="confirm-password" className="block text-sm font-bold text-stone-700 mb-2">
                       Confirm Password
                     </label>
                     <Input
@@ -313,17 +339,17 @@ const Admin = () => {
                       onChange={handleRegisterInputChange}
                       required
                       placeholder="Confirm your password"
-                      className="w-full"
+                      className="w-full h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl"
                       disabled={isLoading}
                     />
                   </div>
 
                   <Button 
                     type="submit" 
-                    className="w-full btn-hero-primary"
+                    className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800 h-14 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 font-bold text-lg"
                     disabled={isLoading}
                   >
-                    <UserPlus className="h-4 w-4 mr-2" />
+                    <UserPlus className="h-5 w-5 mr-2" />
                     {isLoading ? "Creating Account..." : "Create Account"}
                   </Button>
                 </form>
@@ -332,8 +358,9 @@ const Admin = () => {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-6">
-          <p className="text-white/60 text-sm">
+        {/* Footer Text */}
+        <div className="text-center mt-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <p className="text-stone-600 text-sm bg-white/60 backdrop-blur-sm px-6 py-3 rounded-xl inline-block border border-amber-200">
             Secure admin access for MOMORE store management
           </p>
         </div>

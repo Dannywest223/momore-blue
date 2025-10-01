@@ -250,12 +250,17 @@ const FeaturedProducts = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-12 max-w-2xl mx-auto border border-primary/10">
-              <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-6">
+              <h2 className="text-4xl font-bold mb-6" style={{ 
+                background: 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
                 Featured Products
               </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-primary to-primary/50 mx-auto mb-8 rounded-full"></div>
+              <div className="w-24 h-1 mx-auto mb-8 rounded-full" style={{ background: 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)' }}></div>
               <div className="flex items-center justify-center gap-2">
-                <RefreshCw className="w-5 h-5 animate-spin text-primary" />
+                <RefreshCw className="w-5 h-5 animate-spin" style={{ color: 'rgba(146, 64, 14, 0.85)' }} />
                 <p className="text-muted-foreground text-lg">
                   Loading our featured products...
                 </p>
@@ -291,22 +296,27 @@ const FeaturedProducts = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Elegant Header */}
           <div className="text-center mb-16">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-12 max-w-4xl mx-auto border border-primary/10">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 sm:p-12 max-w-4xl mx-auto border border-primary/10">
               <div className="inline-block mb-4">
-                <span className="text-sm font-semibold text-primary/70 uppercase tracking-wider bg-primary/10 px-4 py-2 rounded-full">
+                <span className="text-xs sm:text-sm font-semibold text-white uppercase tracking-wider px-3 sm:px-4 py-1.5 sm:py-2 rounded-full" style={{ background: 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)' }}>
                   Premium Collection
                 </span>
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6" style={{ 
+                background: 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
                 Featured Products
               </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-primary to-primary/50 mx-auto mb-8 rounded-full"></div>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
+              <div className="w-24 h-1 mx-auto mb-8 rounded-full" style={{ background: 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)' }}></div>
+              <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
                 Discover our complete collection of premium products, carefully curated for excellence
               </p>
               
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <p className="text-sm text-muted-foreground/70">
+                <p className="text-xs sm:text-sm text-muted-foreground/70">
                   Showing {featuredProducts?.length || 0} total products
                 </p>
                 <Button 
@@ -314,17 +324,29 @@ const FeaturedProducts = () => {
                   variant="outline"
                   size="sm"
                   disabled={isRefreshing}
-                  className="border-primary/30 hover:bg-primary hover:text-white transition-all duration-300"
+                  className="border-[#92400e] text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-2 hover:text-white transition-all duration-300"
+                  style={{ 
+                    borderColor: 'rgba(146, 64, 14, 0.5)',
+                    background: isRefreshing ? 'transparent' : 'transparent'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
                 >
                   {isRefreshing ? (
                     <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Refreshing...
+                      <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
+                      <span className="hidden sm:inline">Refreshing...</span>
+                      <span className="sm:hidden">...</span>
                     </>
                   ) : (
                     <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Refresh Products
+                      <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Refresh Products</span>
+                      <span className="sm:hidden">Refresh</span>
                     </>
                   )}
                 </Button>
@@ -352,12 +374,12 @@ const FeaturedProducts = () => {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleWishlistToggle(product)}
-                      className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-300 hover:scale-110 ${
+                      className={`absolute top-3 right-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-300 hover:scale-110 ${
                         isInWishlist(product._id) ? 'text-red-500 bg-red-50' : 'text-gray-600 hover:text-red-500'
                       }`}
                     >
                       <Heart
-                        className={`w-4 h-4 transition-all ${
+                        className={`w-3 h-3 sm:w-4 sm:h-4 transition-all ${
                           isInWishlist(product._id) ? 'fill-current scale-110' : ''
                         }`}
                       />
@@ -365,7 +387,7 @@ const FeaturedProducts = () => {
 
                     {/* Stock Badge */}
                     <div className="absolute bottom-3 left-3">
-                      <span className={`text-xs px-3 py-1.5 rounded-full font-medium shadow-md ${
+                      <span className={`text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-medium shadow-md ${
                         product.inStock 
                           ? 'bg-green-100/90 text-green-700' 
                           : 'bg-red-100/90 text-red-700'
@@ -377,7 +399,7 @@ const FeaturedProducts = () => {
                     {/* Featured Badge */}
                     {product.featured && (
                       <div className="absolute top-3 left-3">
-                        <span className="bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 text-xs px-3 py-1.5 rounded-full font-semibold shadow-md">
+                        <span className="bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold shadow-md">
                           ⭐ Featured
                         </span>
                       </div>
@@ -385,9 +407,9 @@ const FeaturedProducts = () => {
                   </div>
 
                   {/* Product Info */}
-                  <CardContent className="p-6 space-y-4">
+                  <CardContent className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-primary font-medium uppercase tracking-wider bg-primary/10 px-2 py-1 rounded-md">
+                      <span className="text-xs font-medium uppercase tracking-wider px-2 py-1 rounded-md text-white" style={{ background: 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)' }}>
                         {product.category}
                       </span>
                       <span className="text-xs text-muted-foreground">
@@ -396,17 +418,20 @@ const FeaturedProducts = () => {
                     </div>
                     
                     <Link to={`/product/${product._id}`}>
-                      <h3 className="text-lg font-bold text-foreground hover:text-primary transition-colors cursor-pointer leading-tight line-clamp-2">
+                      <h3 className="text-base sm:text-lg font-bold text-foreground transition-colors cursor-pointer leading-tight line-clamp-2" 
+                          style={{ color: 'inherit' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)'; e.currentTarget.style.webkitBackgroundClip = 'text'; e.currentTarget.style.webkitTextFillColor = 'transparent'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.webkitTextFillColor = 'inherit'; }}>
                         {product.name}
                       </h3>
                     </Link>
 
-                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2">
                       {product.description}
                     </p>
                     
                     <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-foreground">
+                      <span className="text-xl sm:text-2xl font-bold text-foreground">
                         ${product.price.toFixed(2)}
                       </span>
                     </div>
@@ -415,13 +440,16 @@ const FeaturedProducts = () => {
                     <Button
                       onClick={() => handleAddToCart(product)}
                       disabled={!product.inStock}
-                      className={`w-full transition-all duration-300 ${
+                      className={`w-full transition-all duration-300 text-xs sm:text-sm py-2 sm:py-2.5 ${
                         product.inStock
-                          ? 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white shadow-md hover:shadow-lg hover:scale-[1.02]'
+                          ? 'text-white shadow-md hover:shadow-lg hover:scale-[1.02]'
                           : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                       }`}
+                      style={product.inStock ? { 
+                        background: 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)'
+                      } : {}}
                     >
-                      <ShoppingBag className="w-4 h-4 mr-2" />
+                      <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                       {product.inStock ? 'Add to Cart' : 'Out of Stock'}
                     </Button>
                   </CardContent>
@@ -430,30 +458,35 @@ const FeaturedProducts = () => {
             </div>
           ) : (
             <div className="text-center">
-              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-12 max-w-2xl mx-auto border border-primary/10">
-                <h3 className="text-2xl font-bold text-foreground mb-4">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 sm:p-12 max-w-2xl mx-auto border border-primary/10">
+                <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">
                   No Products Found
                 </h3>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-sm sm:text-base text-muted-foreground mb-6">
                   It looks like there are no products in your database. Add some products to see them here.
                 </p>
-                <div className="flex gap-4 justify-center">
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button 
                     onClick={handleRefresh} 
                     disabled={isRefreshing}
-                    className="bg-primary hover:bg-primary/90"
+                    className="text-white text-xs sm:text-sm px-4 sm:px-6 py-2"
+                    style={{ background: 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)' }}
                   >
                     {isRefreshing ? (
                       <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Refreshing...
+                        <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
+                        <span className="hidden sm:inline">Refreshing...</span>
+                        <span className="sm:hidden">...</span>
                       </>
                     ) : (
                       'Try Again'
                     )}
                   </Button>
                   <Link to="/shop">
-                    <Button variant="outline" className="border-primary/30 hover:bg-primary hover:text-white">
+                    <Button variant="outline" className="border-[#92400e] hover:text-white text-xs sm:text-sm px-4 sm:px-6 py-2 w-full sm:w-auto"
+                            style={{ borderColor: 'rgba(146, 64, 14, 0.5)' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
                       View Shop Page
                     </Button>
                   </Link>
@@ -468,10 +501,11 @@ const FeaturedProducts = () => {
               <Link to="/shop">
                 <Button 
                   size="lg"
-                  className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-semibold"
+                  className="text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-semibold text-sm sm:text-base"
+                  style={{ background: 'linear-gradient(120deg, rgba(78, 35, 16, 0.95) 0%, rgba(120, 53, 15, 0.90) 30%, rgba(146, 64, 14, 0.85) 60%, rgba(180, 83, 9, 0.75) 100%)' }}
                 >
                   View All Products
-                  <ShoppingBag className="w-5 h-5 ml-2" />
+                  <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
                 </Button>
               </Link>
             </div>

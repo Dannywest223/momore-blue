@@ -26,8 +26,8 @@ const AdminImageCarousel = ({ images, productName, onRemoveImage = null, isPrevi
 
   if (!images || images.length === 0) {
     return (
-      <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-        <span className="text-gray-400">No images</span>
+      <div className="w-full h-48 bg-amber-50 rounded-xl flex items-center justify-center border-2 border-dashed border-amber-200">
+        <span className="text-amber-600 font-medium">No images</span>
       </div>
     );
   }
@@ -42,7 +42,7 @@ const AdminImageCarousel = ({ images, productName, onRemoveImage = null, isPrevi
 
   if (images.length === 1) {
     return (
-      <div className="relative w-full h-48 bg-gray-50 rounded-lg overflow-hidden">
+      <div className="relative w-full h-48 bg-amber-50 rounded-xl overflow-hidden border-2 border-amber-100">
         <img
           src={
             isPreview 
@@ -59,10 +59,10 @@ const AdminImageCarousel = ({ images, productName, onRemoveImage = null, isPrevi
           <Button
             size="icon"
             variant="destructive"
-            className="absolute top-2 right-2 w-6 h-6 rounded-full"
+            className="absolute top-2 right-2 w-7 h-7 rounded-full shadow-lg"
             onClick={() => onRemoveImage(0)}
           >
-            <X className="w-3 h-3" />
+            <X className="w-4 h-4" />
           </Button>
         )}
       </div>
@@ -70,7 +70,7 @@ const AdminImageCarousel = ({ images, productName, onRemoveImage = null, isPrevi
   }
 
   return (
-    <div className="relative w-full h-48 bg-gray-50 rounded-lg overflow-hidden">
+    <div className="relative w-full h-48 bg-amber-50 rounded-xl overflow-hidden border-2 border-amber-100">
       {images.map((image, index) => (
         <img
           key={index}
@@ -96,17 +96,17 @@ const AdminImageCarousel = ({ images, productName, onRemoveImage = null, isPrevi
         onClick={prevImage}
         variant="ghost"
         size="icon"
-        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white shadow-lg w-8 h-8"
+        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/95 hover:bg-white shadow-lg w-9 h-9 rounded-full border-2 border-amber-200"
       >
-        <ChevronLeft className="w-4 h-4" />
+        <ChevronLeft className="w-5 h-5 text-amber-700" />
       </Button>
       <Button
         onClick={nextImage}
         variant="ghost"
         size="icon"
-        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white shadow-lg w-8 h-8"
+        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/95 hover:bg-white shadow-lg w-9 h-9 rounded-full border-2 border-amber-200"
       >
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight className="w-5 h-5 text-amber-700" />
       </Button>
 
       {/* Remove button */}
@@ -114,10 +114,10 @@ const AdminImageCarousel = ({ images, productName, onRemoveImage = null, isPrevi
         <Button
           size="icon"
           variant="destructive"
-          className="absolute top-2 right-2 w-6 h-6 rounded-full"
+          className="absolute top-2 right-2 w-7 h-7 rounded-full shadow-lg"
           onClick={() => onRemoveImage(currentIndex)}
         >
-          <X className="w-3 h-3" />
+          <X className="w-4 h-4" />
         </Button>
       )}
 
@@ -128,14 +128,14 @@ const AdminImageCarousel = ({ images, productName, onRemoveImage = null, isPrevi
             key={index}
             onClick={() => setCurrentIndex(index)}
             className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              index === currentIndex ? 'bg-white shadow-lg' : 'bg-white/50'
+              index === currentIndex ? 'bg-amber-600 shadow-lg w-6' : 'bg-white/70'
             }`}
           />
         ))}
       </div>
 
       {/* Image counter */}
-      <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+      <div className="absolute bottom-2 right-2 bg-amber-900/80 text-white px-2 py-1 rounded-lg text-xs font-semibold">
         {currentIndex + 1} / {images.length}
       </div>
     </div>
@@ -194,7 +194,7 @@ const AdminDashboard = () => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    const maxImages = 5; // Maximum 5 images
+    const maxImages = 5;
     
     if (files.length > maxImages) {
       toast({
@@ -210,7 +210,6 @@ const AdminDashboard = () => {
       images: files
     }));
 
-    // Create preview URLs
     const previewUrls = files.map(file => URL.createObjectURL(file));
     setImagePreview(previewUrls);
   };
@@ -225,7 +224,6 @@ const AdminDashboard = () => {
     }));
     setImagePreview(newPreviews);
 
-    // Clean up the URL object
     if (imagePreview[indexToRemove]) {
       URL.revokeObjectURL(imagePreview[indexToRemove]);
     }
@@ -268,7 +266,6 @@ const AdminDashboard = () => {
           description: `Product ${editingProduct ? 'updated' : 'created'} successfully`,
         });
         
-        // Reset form and previews
         setFormData({
           name: '',
           description: '',
@@ -279,7 +276,6 @@ const AdminDashboard = () => {
           images: []
         });
         
-        // Clean up preview URLs
         imagePreview.forEach(url => URL.revokeObjectURL(url));
         setImagePreview([]);
         
@@ -365,42 +361,70 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50/30 py-12">
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .card-hover {
+          transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px rgba(217, 119, 6, 0.15);
+        }
+      `}</style>
+
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4 animate-fade-in">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-900 via-amber-700 to-amber-900 bg-clip-text text-transparent mb-2">
+              Admin Dashboard
+            </h1>
+            <p className="text-stone-600">Manage your premium product collection</p>
+          </div>
           <Button
             onClick={resetForm}
-            className="bg-primary hover:bg-primary/90"
+            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800 shadow-lg hover:shadow-xl transition-all duration-300 h-12 px-6 rounded-xl font-semibold"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-5 w-5 mr-2" />
             Add Product
           </Button>
         </div>
 
+        {/* Add/Edit Form */}
         {showAddForm && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>
+          <Card className="mb-8 border-0 shadow-xl rounded-2xl overflow-hidden animate-fade-in">
+            <CardHeader className="bg-gradient-to-r from-amber-700 to-amber-800 text-white pb-6">
+              <CardTitle className="text-2xl font-bold">
                 {editingProduct ? 'Edit Product' : 'Add New Product'}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-8 bg-white">
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="name">Product Name</Label>
+                    <Label htmlFor="name" className="text-sm font-bold text-stone-700 mb-2 block">Product Name</Label>
                     <Input
                       id="name"
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
                       required
+                      className="h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="price">Price</Label>
+                    <Label htmlFor="price" className="text-sm font-bold text-stone-700 mb-2 block">Price ($)</Label>
                     <Input
                       id="price"
                       name="price"
@@ -409,22 +433,24 @@ const AdminDashboard = () => {
                       value={formData.price}
                       onChange={handleInputChange}
                       required
+                      className="h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="category">Category</Label>
+                    <Label htmlFor="category" className="text-sm font-bold text-stone-700 mb-2 block">Category</Label>
                     <Input
                       id="category"
                       name="category"
                       value={formData.category}
                       onChange={handleInputChange}
                       required
+                      className="h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="stockQuantity">Stock Quantity</Label>
+                    <Label htmlFor="stockQuantity" className="text-sm font-bold text-stone-700 mb-2 block">Stock Quantity</Label>
                     <Input
                       id="stockQuantity"
                       name="stockQuantity"
@@ -432,12 +458,13 @@ const AdminDashboard = () => {
                       value={formData.stockQuantity}
                       onChange={handleInputChange}
                       required
+                      className="h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description" className="text-sm font-bold text-stone-700 mb-2 block">Description</Label>
                   <Textarea
                     id="description"
                     name="description"
@@ -445,11 +472,12 @@ const AdminDashboard = () => {
                     onChange={handleInputChange}
                     rows={4}
                     required
+                    className="border-2 border-amber-200 focus:border-amber-500 rounded-xl"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="images">Product Images (Max 5)</Label>
+                  <Label htmlFor="images" className="text-sm font-bold text-stone-700 mb-2 block">Product Images (Max 5)</Label>
                   <Input
                     id="images"
                     type="file"
@@ -457,13 +485,14 @@ const AdminDashboard = () => {
                     accept="image/*"
                     onChange={handleImageChange}
                     required={!editingProduct}
-                    className="mb-4"
+                    className="mb-4 h-12 border-2 border-amber-200 focus:border-amber-500 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-amber-100 file:text-amber-700 file:font-semibold hover:file:bg-amber-200"
                   />
                   
-                  {/* Image Preview */}
                   {imagePreview.length > 0 && (
                     <div className="mt-4">
-                      <Label className="text-sm font-medium mb-2 block">Image Preview ({imagePreview.length} images):</Label>
+                      <Label className="text-sm font-semibold mb-3 block text-amber-900">
+                        Preview ({imagePreview.length} {imagePreview.length === 1 ? 'image' : 'images'})
+                      </Label>
                       <AdminImageCarousel 
                         images={imagePreview} 
                         productName={formData.name || "Product"} 
@@ -473,12 +502,12 @@ const AdminDashboard = () => {
                     </div>
                   )}
                   
-                  <p className="text-sm text-muted-foreground mt-2">
-                    You can upload 1-5 images. Multiple images will display as an animated carousel.
+                  <p className="text-sm text-stone-600 mt-3 bg-amber-50 p-3 rounded-lg border-l-4 border-amber-500">
+                    Upload 1-5 high-quality images. Multiple images will display as an animated carousel.
                   </p>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3 bg-amber-50 p-4 rounded-xl border-2 border-amber-200">
                   <Switch
                     id="featured"
                     name="featured"
@@ -486,19 +515,24 @@ const AdminDashboard = () => {
                     onCheckedChange={(checked) => 
                       setFormData(prev => ({ ...prev, featured: checked }))
                     }
+                    className="data-[state=checked]:bg-amber-600"
                   />
-                  <Label htmlFor="featured">Featured Product</Label>
+                  <Label htmlFor="featured" className="text-sm font-bold text-stone-700 cursor-pointer">Featured Product (Show on homepage)</Label>
                 </div>
 
-                <div className="flex space-x-4">
-                  <Button type="submit" className="bg-primary hover:bg-primary/90">
-                    <Upload className="h-4 w-4 mr-2" />
+                <div className="flex space-x-4 pt-4">
+                  <Button 
+                    type="submit" 
+                    className="bg-gradient-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800 h-12 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 font-bold"
+                  >
+                    <Upload className="h-5 w-5 mr-2" />
                     {editingProduct ? 'Update Product' : 'Create Product'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={resetForm}
+                    className="h-12 px-8 rounded-xl border-2 border-amber-200 hover:bg-amber-50 font-semibold"
                   >
                     Cancel
                   </Button>
@@ -508,58 +542,82 @@ const AdminDashboard = () => {
           </Card>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Package className="h-5 w-5 mr-2" />
-              Products ({products.length})
+        {/* Products Grid */}
+        <Card className="border-0 shadow-xl rounded-2xl overflow-hidden animate-fade-in">
+          <CardHeader className="bg-gradient-to-r from-amber-700 to-amber-800 text-white pb-6">
+            <CardTitle className="flex items-center text-2xl font-bold">
+              <Package className="h-6 w-6 mr-3" />
+              Products Collection ({products.length})
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-8 bg-white">
             {loading ? (
-              <p>Loading products...</p>
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-amber-600 mb-4"></div>
+                <p className="text-stone-600 font-medium">Loading products...</p>
+              </div>
             ) : products.length === 0 ? (
-              <p>No products found. Add your first product!</p>
+              <div className="text-center py-12 bg-amber-50 rounded-xl border-2 border-dashed border-amber-200">
+                <Package className="h-16 w-16 text-amber-400 mx-auto mb-4" />
+                <p className="text-lg font-semibold text-stone-800 mb-2">No products yet</p>
+                <p className="text-stone-600">Add your first product to get started!</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {products.map((product) => (
-                  <Card key={product._id} className="border">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((product, index) => (
+                  <Card 
+                    key={product._id} 
+                    className="border-0 shadow-lg rounded-2xl overflow-hidden card-hover animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
                     <div className="relative">
                       <AdminImageCarousel 
                         images={product.images} 
                         productName={product.name} 
                       />
                       {product.featured && (
-                        <span className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded">
-                          Featured
+                        <span className="absolute top-3 left-3 bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 px-3 py-1.5 text-xs font-bold rounded-full shadow-lg">
+                          ⭐ Featured
                         </span>
                       )}
                       {product.images && product.images.length > 1 && (
-                        <span className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 text-xs rounded">
+                        <span className="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1.5 text-xs font-bold rounded-full shadow-lg">
                           {product.images.length} images
                         </span>
                       )}
                     </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                      <p className="text-gray-600 text-sm mb-2">{product.category}</p>
-                      <p className="text-primary font-bold text-xl mb-2">${product.price}</p>
-                      <p className="text-sm text-gray-500 mb-4">Stock: {product.stockQuantity}</p>
+                    <CardContent className="p-6 bg-white">
+                      <div className="mb-2">
+                        <span className="text-xs text-amber-700 font-bold uppercase tracking-wider bg-amber-100 px-3 py-1 rounded-full">
+                          {product.category}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-lg mb-2 text-stone-800 line-clamp-2">{product.name}</h3>
+                      <p className="text-2xl font-bold bg-gradient-to-r from-amber-700 to-amber-900 bg-clip-text text-transparent mb-2">
+                        ${product.price}
+                      </p>
+                      <p className="text-sm text-stone-600 mb-4 bg-stone-50 px-3 py-1.5 rounded-lg inline-block">
+                        Stock: <span className="font-bold">{product.stockQuantity}</span>
+                      </p>
 
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-3">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleEdit(product)}
+                          className="flex-1 h-10 border-2 border-amber-200 hover:bg-amber-50 hover:border-amber-400 rounded-lg font-semibold"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDelete(product._id)}
+                          className="flex-1 h-10 rounded-lg font-semibold shadow-md hover:shadow-lg"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
                         </Button>
                       </div>
                     </CardContent>
